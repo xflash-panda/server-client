@@ -21,6 +21,15 @@ const (
 	VMess       NodeType = "vmess"
 )
 
+type API interface {
+	Config(nodeInfo *NodeConfig, err error)
+	Users(users []*User, err error)
+	Submit(userTraffics []*UserTraffic) (err error)
+	SubmitStatsWithAgent(nodeIp string) error
+	SubmitWithAgent(nodeIp string, userTraffics []*UserTraffic) error
+	Heartbeat(nodeIp string) error
+}
+
 // Config  api config
 type Config struct {
 	APIHost  string

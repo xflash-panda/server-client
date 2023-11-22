@@ -6,14 +6,6 @@ import (
 )
 
 // API is the interface for different panel's api.
-type API interface {
-	Config(nodeInfo *NodeConfig, err error)
-	Users(users []*User, err error)
-	Submit(userTraffics []*UserTraffic) (err error)
-	SubmitStatsWithAgent(nodeIp string) error
-	SubmitWithAgent(nodeIp string, userTraffics []*UserTraffic) error
-	Heartbeat(nodeIp string) error
-}
 
 type NodeConfig interface {
 	String() string
