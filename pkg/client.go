@@ -12,6 +12,7 @@ import (
 )
 
 type NodeType string
+type NodeId int
 
 const (
 	Trojan      NodeType = "trojan"
@@ -32,12 +33,10 @@ type API interface {
 
 // Config  api config
 type Config struct {
-	APIHost  string
-	NodeID   int
-	NodeType NodeType
-	Token    string
-	Timeout  time.Duration
-	Debug    bool
+	APIHost string
+	Token   string
+	Timeout time.Duration
+	Debug   bool
 }
 
 // Client APIClient create a api client to the panel.
@@ -66,8 +65,7 @@ func New(apiConfig *Config) *Client {
 	// Create Key for each requests
 	client.SetRetryCount(3)
 	client.SetQueryParams(map[string]string{
-		"node_id": strconv.Itoa(apiConfig.NodeID),
-		"token":   apiConfig.Token,
+		"token": apiConfig.Token,
 	})
 	client.SetCloseConnection(true)
 
@@ -92,10 +90,11 @@ func (c *Client) assembleURL(path string) string {
 }
 
 // Config will pull config form server
-func (c *Client) Config() (config NodeConfig, err error) {
-	var path = fmt.Sprintf("/api/v1/server/%s/config", c.config.NodeType)
+func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
+	var path = fmt.Sprintf("/api/v1/server/%s/config", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
+		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		Get(path)
 
 	if err != nil {
@@ -108,11 +107,26 @@ func (c *Client) Config() (config NodeConfig, err error) {
 	}
 
 	var resp RespConfig
-	switch c.config.NodeType {
+	switch nodeType {
 	case Hysteria2:
 		resp.Data = &Hysteria2Config{}
 		break
+	case Hysteria:
+		resp.Data = &HysteriaConfig{}
+		break
+	case Trojan:
+		resp.Data = &TrojanConfig{}
+		break
+	case ShadowSocks:
+		resp.Data = &ShadowsocksConfig{}
+		break
+	case VMess:
+		resp.Data = &VMessConfig{}
+		break
+	default:
+		return nil, fmt.Errorf("invalid config type: %s", nodeType)
 	}
+
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
 		return nil, fmt.Errorf("parse response failed: %s", err)
 	}
@@ -124,9 +138,9 @@ func (c *Client) Config() (config NodeConfig, err error) {
 }
 
 // Users will pull users form server
-func (c *Client) Users() (UserList *[]User, err error) {
-	var path = fmt.Sprintf("/api/v1/server/%s/users", c.config.NodeType)
-	res, err := c.client.R().ForceContentType("application/json").Get(path)
+func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
+	var path = fmt.Sprintf("/api/v1/server/%s/users", nodeType)
+	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).ForceContentType("application/json").Get(path)
 
 	if err != nil {
 		return nil, fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
@@ -149,9 +163,9 @@ func (c *Client) Users() (UserList *[]User, err error) {
 }
 
 // Submit reports the user traffic
-func (c *Client) Submit(userTraffic []*UserTraffic) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/submit", c.config.NodeType)
-	res, err := c.client.R().SetBody(userTraffic).Post(path)
+func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
+	var path = fmt.Sprintf("/api/v1/server/%s/submit", nodeType)
+	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetBody(userTraffic).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}
@@ -171,9 +185,9 @@ func (c *Client) Submit(userTraffic []*UserTraffic) error {
 	return nil
 }
 
-func (c *Client) SubmitWithAgent(nodeIp string, userTraffic []*UserTraffic) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/submitWithAgent", c.config.NodeType)
-	res, err := c.client.R().SetQueryParam("node_ip", nodeIp).SetBody(userTraffic).Post(path)
+func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, userTraffic []*UserTraffic) error {
+	var path = fmt.Sprintf("/api/v1/server/%s/submitWithAgent", nodeType)
+	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).SetBody(userTraffic).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}
@@ -193,9 +207,9 @@ func (c *Client) SubmitWithAgent(nodeIp string, userTraffic []*UserTraffic) erro
 	return nil
 }
 
-func (c *Client) SubmitStatsWithAgent(nodeIp string, stats *Stats) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", c.config.NodeType)
-	res, err := c.client.R().SetQueryParam("node_ip", nodeIp).SetBody(stats).Post(path)
+func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *Stats) error {
+	var path = fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", nodeType)
+	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).SetBody(stats).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}
@@ -215,11 +229,11 @@ func (c *Client) SubmitStatsWithAgent(nodeIp string, stats *Stats) error {
 	return nil
 }
 
-func (c *Client) Heartbeat(nodeIp string) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/heartbeat", c.config.NodeType)
+func (c *Client) Heartbeat(nodeId NodeId, nodeType NodeType, nodeIp string) error {
+	var path = fmt.Sprintf("/api/v1/server/%s/heartbeat", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
-		SetQueryParam("node_ip", nodeIp).
+		SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).
 		Get(path)
 
 	if err != nil {

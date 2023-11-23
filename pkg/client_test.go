@@ -6,11 +6,9 @@ import (
 
 func CreateClient() *Client {
 	apiConfig := &Config{
-		APIHost:  "http://127.0.0.1:8080",
-		NodeID:   1,
-		Token:    "123456789123456789",
-		NodeType: Hysteria2,
-		Debug:    true,
+		APIHost: "http://127.0.0.1:8080",
+		Token:   "123456789123456789",
+		Debug:   true,
 	}
 	client := New(apiConfig)
 	return client
@@ -18,7 +16,7 @@ func CreateClient() *Client {
 
 func TestConfig(t *testing.T) {
 	client := CreateClient()
-	config, err := client.Config()
+	config, err := client.Config(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -27,7 +25,7 @@ func TestConfig(t *testing.T) {
 
 func TestUsers(t *testing.T) {
 	client := CreateClient()
-	userList, err := client.Users()
+	userList, err := client.Users(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -36,7 +34,7 @@ func TestUsers(t *testing.T) {
 
 func TestSubmit(t *testing.T) {
 	client := CreateClient()
-	users, err := client.Users()
+	users, err := client.Users(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -49,7 +47,7 @@ func TestSubmit(t *testing.T) {
 		}
 	}
 	//client.Debug()
-	err = client.Submit(generalUserTraffic)
+	err = client.Submit(1, Hysteria2, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,7 +55,7 @@ func TestSubmit(t *testing.T) {
 
 func TestSubmitWithAgent(t *testing.T) {
 	client := CreateClient()
-	users, err := client.Users()
+	users, err := client.Users(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,7 +67,7 @@ func TestSubmitWithAgent(t *testing.T) {
 			Download: 114514,
 		}
 	}
-	err = client.SubmitWithAgent("127.0.0.1", generalUserTraffic)
+	err = client.SubmitWithAgent(1, Hysteria2, "127.0.0.1", generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,7 +84,7 @@ func TestSubmitStatsWithAgent(t *testing.T) {
 		},
 	}
 
-	err := client.SubmitStatsWithAgent("127.0.0.1", stats)
+	err := client.SubmitStatsWithAgent(1, Hysteria2, "127.0.0.1", stats)
 	if err != nil {
 		t.Error(err)
 	}
@@ -94,7 +92,7 @@ func TestSubmitStatsWithAgent(t *testing.T) {
 
 func TestHeartbeat(t *testing.T) {
 	client := CreateClient()
-	err := client.Heartbeat("127.0.0.1")
+	err := client.Heartbeat(1, Hysteria2, "127.0.0.1")
 	if err != nil {
 		t.Error(err)
 	}
