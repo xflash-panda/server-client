@@ -8,11 +8,9 @@ import (
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	"strconv"
+	"strings"
 	"time"
 )
-
-type NodeType string
-type NodeId int
 
 const (
 	Trojan      NodeType = "trojan"
@@ -21,6 +19,14 @@ const (
 	Hysteria2   NodeType = "hysteria2"
 	VMess       NodeType = "vmess"
 )
+
+type NodeType string
+
+func (n NodeType) String() string {
+	return strings.ToLower(string(n))
+}
+
+type NodeId int
 
 type API interface {
 	Config(nodeInfo *NodeConfig, err error)
@@ -107,20 +113,20 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 	}
 
 	var resp RespConfig
-	switch nodeType {
-	case Hysteria2:
+	switch nodeType.String() {
+	case Hysteria2.String():
 		resp.Data = &Hysteria2Config{}
 		break
-	case Hysteria:
+	case Hysteria.String():
 		resp.Data = &HysteriaConfig{}
 		break
-	case Trojan:
+	case Trojan.String():
 		resp.Data = &TrojanConfig{}
 		break
-	case ShadowSocks:
+	case ShadowSocks.String():
 		resp.Data = &ShadowsocksConfig{}
 		break
-	case VMess:
+	case VMess.String():
 		resp.Data = &VMessConfig{}
 		break
 	default:
