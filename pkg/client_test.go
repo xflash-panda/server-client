@@ -16,7 +16,7 @@ func CreateClient() *Client {
 
 func TestConfig(t *testing.T) {
 	client := CreateClient()
-	config, err := client.Config(1, "HYSTERIA2")
+	config, err := client.Config(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}

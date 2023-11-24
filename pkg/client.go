@@ -28,13 +28,15 @@ func (n NodeType) String() string {
 
 type NodeId int
 
-type API interface {
-	Config(nodeInfo *NodeConfig, err error)
-	Users(users []*User, err error)
-	Submit(userTraffics []*UserTraffic) (err error)
-	SubmitStatsWithAgent(nodeIp string) error
-	SubmitWithAgent(nodeIp string, userTraffics []*UserTraffic) error
-	Heartbeat(nodeIp string) error
+type configFactoryFunc func() NodeConfig
+
+// 定义一个映射表，将 NodeType 映射到对应的配置工厂函数
+var configFactories = map[NodeType]configFactoryFunc{
+	Hysteria2:   func() NodeConfig { return &Hysteria2Config{} },
+	Hysteria:    func() NodeConfig { return &HysteriaConfig{} },
+	Trojan:      func() NodeConfig { return &TrojanConfig{} },
+	ShadowSocks: func() NodeConfig { return &ShadowsocksConfig{} },
+	VMess:       func() NodeConfig { return &VMessConfig{} },
 }
 
 // Config  api config
@@ -95,8 +97,7 @@ func (c *Client) assembleURL(path string) string {
 	return c.config.APIHost + path
 }
 
-// Config will pull config form server
-func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
+func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
 	var path = fmt.Sprintf("/api/v1/server/%s/config", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
@@ -104,42 +105,41 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 		Get(path)
 
 	if err != nil {
-		return nil, fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return nil, fmt.Errorf("request %s failed: %w", c.assembleURL(path), err)
 	}
 
-	if res.StatusCode() > 400 {
+	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return nil, fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return nil, fmt.Errorf("request %s failed: %s, %w", c.assembleURL(path), string(body), err)
 	}
 
-	var resp RespConfig
-	switch nodeType.String() {
-	case Hysteria2.String():
-		resp.Data = &Hysteria2Config{}
-		break
-	case Hysteria.String():
-		resp.Data = &HysteriaConfig{}
-		break
-	case Trojan.String():
-		resp.Data = &TrojanConfig{}
-		break
-	case ShadowSocks.String():
-		resp.Data = &ShadowsocksConfig{}
-		break
-	case VMess.String():
-		resp.Data = &VMessConfig{}
-		break
-	default:
+	return res.Body(), nil
+}
+
+func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
+	rawData, err := c.RawConfig(nodeId, nodeType)
+	if err != nil {
+		return nil, err // 错误已经被 GetRawConfig 格式化，直接返回即可
+	}
+
+	factoryFunc, ok := configFactories[nodeType]
+	if !ok {
 		return nil, fmt.Errorf("invalid config type: %s", nodeType)
 	}
 
-	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		return nil, fmt.Errorf("parse response failed: %s", err)
+	var resp RespConfig
+	resp = RespConfig{
+		Data: factoryFunc(),
+	}
+
+	if err := json.Unmarshal(rawData, &resp); err != nil {
+		return nil, fmt.Errorf("parse response failed: %w", err)
 	}
 
 	if len(resp.Message) > 0 {
 		return nil, fmt.Errorf("api error, message: %s", resp.Message)
 	}
+
 	return resp.Data, nil
 }
 
