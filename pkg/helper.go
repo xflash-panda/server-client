@@ -47,57 +47,83 @@ func AsShadowsocksConfig(nc NodeConfig) (*ShadowsocksConfig, error) {
 }
 
 func AsConfig[T NodeConfig](nc NodeConfig) (T, error) {
+	// 创建类型 T 的零值
 	var zero T
 
+	// 使用反射来获取 nc 的实际类型
 	val := reflect.ValueOf(nc)
-
-	if val.Kind() != reflect.Ptr || val.IsNil() {
-		return zero, fmt.Errorf("AsConfig requires a non-nil pointer to a NodeConfig, got %T", nc)
+	if val.Kind() == reflect.Ptr && val.IsNil() {
+		// 如果 nc 是 nil 指针，则返回零值和错误
+		return zero, fmt.Errorf("nil cannot be converted to type %v", reflect.TypeOf(zero))
 	}
 
-	targetType := reflect.TypeOf(zero)
-	if !val.Elem().Type().AssignableTo(targetType) {
-		return zero, fmt.Errorf("cannot assert NodeConfig of type %T to %v", nc, targetType)
-	}
-
-	config := val.Elem().Interface()
-
-	tConfig, ok := config.(T)
+	// 使用类型断言尝试将 nc 转换为具体的类型 T
+	tConfig, ok := nc.(T)
 	if !ok {
-		return zero, fmt.Errorf("unexpected error when asserting NodeConfig to %v", targetType)
+		// 如果断言失败，返回零值和错误
+		return zero, fmt.Errorf("cannot assert type %v to type %v", reflect.TypeOf(nc), reflect.TypeOf(zero))
 	}
+
+	// 如果断言成功，返回结果
 	return tConfig, nil
 }
 
-func UnmarshalConfig[T NodeConfig](data []byte) (*T, error) {
-	var config T
+func UnmarshalHysteria2Config(data []byte) (*Hysteria2Config, error) {
 	var resp RespConfig
 	resp = RespConfig{
-		Data: config,
+		Data: &Hysteria2Config{},
 	}
 	err := json.Unmarshal(data, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
-	return &config, nil
-}
-
-func UnmarshalHysteria2Config(data []byte) (*Hysteria2Config, error) {
-	return UnmarshalConfig[Hysteria2Config](data)
+	return resp.Data.(*Hysteria2Config), nil
 }
 
 func UnmarshalHysteriaConfig(data []byte) (*HysteriaConfig, error) {
-	return UnmarshalConfig[HysteriaConfig](data)
+	var resp RespConfig
+	resp = RespConfig{
+		Data: &HysteriaConfig{},
+	}
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+	return resp.Data.(*HysteriaConfig), nil
 }
 
 func UnmarshalTrojanConfig(data []byte) (*TrojanConfig, error) {
-	return UnmarshalConfig[TrojanConfig](data)
+	var resp RespConfig
+	resp = RespConfig{
+		Data: &TrojanConfig{},
+	}
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+	return resp.Data.(*TrojanConfig), nil
 }
 
 func UnmarshalShadowsocksConfig(data []byte) (*ShadowsocksConfig, error) {
-	return UnmarshalConfig[ShadowsocksConfig](data)
+	var resp RespConfig
+	resp = RespConfig{
+		Data: &ShadowsocksConfig{},
+	}
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+	return resp.Data.(*ShadowsocksConfig), nil
 }
 
 func UnmarshalVMessConfig(data []byte) (*VMessConfig, error) {
-	return UnmarshalConfig[VMessConfig](data)
+	var resp RespConfig
+	resp = RespConfig{
+		Data: &VMessConfig{},
+	}
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+	return resp.Data.(*VMessConfig), nil
 }
