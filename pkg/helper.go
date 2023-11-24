@@ -69,9 +69,13 @@ func AsConfig[T NodeConfig](nc NodeConfig) (T, error) {
 	return tConfig, nil
 }
 
-func UnmarshalConfig[T any](data []byte) (*T, error) {
+func UnmarshalConfig[T NodeConfig](data []byte) (*T, error) {
 	var config T
-	err := json.Unmarshal(data, &config)
+	var resp RespConfig
+	resp = RespConfig{
+		Data: config,
+	}
+	err := json.Unmarshal(data, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
