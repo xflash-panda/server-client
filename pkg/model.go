@@ -29,11 +29,11 @@ type Hysteria2Config struct {
 	DisableUDP         bool   `json:"disable_udp"`
 }
 
-func (n Hysteria2Config) String() string {
+func (n *Hysteria2Config) String() string {
 	return fmt.Sprintf("Hysteria2Config: %#v", n)
 }
 
-func (n Hysteria2Config) TypeName() string {
+func (n *Hysteria2Config) TypeName() string {
 	return string(Hysteria2)
 }
 
@@ -48,11 +48,11 @@ type HysteriaConfig struct {
 	DisableUdp          bool   `json:"disable_udp"`
 }
 
-func (n HysteriaConfig) TypeName() string {
+func (n *HysteriaConfig) TypeName() string {
 	return string(Hysteria)
 }
 
-func (n HysteriaConfig) String() string {
+func (n *HysteriaConfig) String() string {
 	return fmt.Sprintf("HysteriaConfig: %#v", n)
 }
 
@@ -63,11 +63,11 @@ type ShadowsocksConfig struct {
 	Network    string `json:"network"`
 }
 
-func (n ShadowsocksConfig) String() string {
+func (n *ShadowsocksConfig) String() string {
 	return fmt.Sprintf("ShadowSocksConfig: %#v", n)
 }
 
-func (n ShadowsocksConfig) TypeName() string {
+func (n *ShadowsocksConfig) TypeName() string {
 	return string(ShadowSocks)
 }
 
@@ -81,11 +81,11 @@ type TrojanConfig struct {
 	GrpcConfig      *conf.GRPCConfig      `json:"grpc_settings,omitempty"`
 }
 
-func (n TrojanConfig) String() string {
+func (n *TrojanConfig) String() string {
 	return fmt.Sprintf("TrojanConfig: %#v", n)
 }
 
-func (n TrojanConfig) TypeName() string {
+func (n *TrojanConfig) TypeName() string {
 	return string(Trojan)
 }
 
@@ -103,11 +103,11 @@ type VMessConfig struct {
 	DnsSettings     *conf.DNSConfig       `json:"dns_settings,omitempty"`
 }
 
-func (n VMessConfig) String() string {
+func (n *VMessConfig) String() string {
 	return fmt.Sprintf("VmessConfig: %#v", n)
 }
 
-func (n VMessConfig) TypeName() string {
+func (n *VMessConfig) TypeName() string {
 	return string(VMess)
 }
 
