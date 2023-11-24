@@ -122,7 +122,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 		return nil, err // 错误已经被 GetRawConfig 格式化，直接返回即可
 	}
 
-	factoryFunc, ok := configFactories[nodeType]
+	factoryFunc, ok := configFactories[NodeType(nodeType.String())]
 	if !ok {
 		return nil, fmt.Errorf("invalid config type: %s", nodeType)
 	}
