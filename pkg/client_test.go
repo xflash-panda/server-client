@@ -75,7 +75,7 @@ func TestSubmitWithAgent(t *testing.T) {
 
 func TestSubmitStatsWithAgent(t *testing.T) {
 	client := CreateClient()
-	stats := &Stats{
+	stats := &TrafficStats{
 		Count:    1,
 		Requests: 1,
 		UserIds:  []int{1, 2, 3},

@@ -213,7 +213,7 @@ func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string
 	return nil
 }
 
-func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *Stats) error {
+func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
 	var path = fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", nodeType)
 	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).SetBody(stats).Post(path)
 	if err != nil {

@@ -116,7 +116,7 @@ type User struct {
 	UUID string `json:"uuid"`
 }
 
-type Stats struct {
+type TrafficStats struct {
 	Count        int         `json:"count"`
 	Requests     int         `json:"requests"`
 	UserIds      []int       `json:"user_ids"`
