@@ -191,9 +191,9 @@ func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTra
 	return nil
 }
 
-func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, userTraffic []*UserTraffic) error {
+func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
 	var path = fmt.Sprintf("/api/v1/server/%s/submitWithAgent", nodeType)
-	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).SetBody(userTraffic).Post(path)
+	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId))}).SetBody(userTraffic).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}

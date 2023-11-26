@@ -67,7 +67,7 @@ func TestSubmitWithAgent(t *testing.T) {
 			Download: 114514,
 		}
 	}
-	err = client.SubmitWithAgent(1, Hysteria2, "127.0.0.1", generalUserTraffic)
+	err = client.SubmitWithAgent(1, Hysteria2, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
