@@ -143,8 +143,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 	return resp.Data, nil
 }
 
-// Users will pull users form server
-func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
+func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
 	var path = fmt.Sprintf("/api/v1/server/%s/users", nodeType)
 	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).ForceContentType("application/json").Get(path)
 
@@ -156,8 +155,18 @@ func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, err 
 		body := res.Body()
 		return nil, fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
 	}
+	return res.Body(), nil
+
+}
+
+// Users will pull users form server
+func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
+	rawData, err := c.RawUsers(nodeId, nodeType)
+	if err != nil {
+		return nil, err
+	}
 	var resp RespUsers
-	if err := json.Unmarshal(res.Body(), &resp); err != nil {
+	if err := json.Unmarshal(rawData, &resp); err != nil {
 		return nil, fmt.Errorf("parse response failed: %s", err)
 	}
 
