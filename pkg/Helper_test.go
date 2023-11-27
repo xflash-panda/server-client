@@ -35,3 +35,18 @@ func TestUnmarshalHysteriaConfig(t *testing.T) {
 	}
 	t.Log(hy2Config.ID)
 }
+
+func TestUnmarshalUsers(t *testing.T) {
+	client := CreateClient()
+	client.Debug(false)
+	usersBytes, err := client.RawUsers(1, Hysteria2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	users, err := UnmarshalUsers(usersBytes)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(len(*users))
+}

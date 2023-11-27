@@ -127,3 +127,12 @@ func UnmarshalVMessConfig(data []byte) (*VMessConfig, error) {
 	}
 	return resp.Data.(*VMessConfig), nil
 }
+
+func UnmarshalUsers(data []byte) (*[]User, error) {
+	var resp RespUsers
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+	return resp.Data, nil
+}
