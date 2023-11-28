@@ -1,6 +1,6 @@
 module github.com/xflash-panda/server-client
 
-go 1.21.4
+go 1.20
 
 require (
 	github.com/go-resty/resty/v2 v2.10.0
