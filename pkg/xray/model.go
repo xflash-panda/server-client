@@ -2,7 +2,6 @@ package xray
 
 import (
 	"encoding/json"
-	"github.com/xtls/xray-core/common/net"
 )
 
 type StringList []string
@@ -116,7 +115,6 @@ type HostsWrapper struct {
 }
 
 type Address struct {
-	net.Address
 }
 
 type HostAddress struct {
