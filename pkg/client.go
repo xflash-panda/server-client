@@ -8,36 +8,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	"strconv"
-	"strings"
 	"time"
 )
-
-const (
-	Trojan      NodeType = "trojan"
-	ShadowSocks NodeType = "shadowsocks"
-	Hysteria    NodeType = "hysteria"
-	Hysteria2   NodeType = "hysteria2"
-	VMess       NodeType = "vmess"
-)
-
-type NodeType string
-
-func (n NodeType) String() string {
-	return strings.ToLower(string(n))
-}
-
-type NodeId int
-
-type configFactoryFunc func() NodeConfig
-
-// 定义一个映射表，将 NodeType 映射到对应的配置工厂函数
-var configFactories = map[NodeType]configFactoryFunc{
-	Hysteria2:   func() NodeConfig { return &Hysteria2Config{} },
-	Hysteria:    func() NodeConfig { return &HysteriaConfig{} },
-	Trojan:      func() NodeConfig { return &TrojanConfig{} },
-	ShadowSocks: func() NodeConfig { return &ShadowsocksConfig{} },
-	VMess:       func() NodeConfig { return &VMessConfig{} },
-}
 
 // Config  api config
 type Config struct {
