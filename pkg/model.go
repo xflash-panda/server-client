@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/xtls/xray-core/infra/conf"
+	"github.com/xflash-panda/server-client/pkg/xray"
 	"strings"
 )
 
@@ -105,8 +105,8 @@ type TrojanConfig struct {
 	AllowInsecure   int                   `json:"allow_insecure"`
 	ServerName      string                `json:"server_name"`
 	Network         string                `json:"network"`
-	WebSocketConfig *conf.WebSocketConfig `json:"ws_settings,omitempty"`
-	GrpcConfig      *conf.GRPCConfig      `json:"grpc_settings,omitempty"`
+	WebSocketConfig *xray.WebSocketConfig `json:"ws_settings,omitempty"`
+	GrpcConfig      *xray.GRPCConfig      `json:"grpc_settings,omitempty"`
 }
 
 func (n *TrojanConfig) String() string {
@@ -122,13 +122,13 @@ type VMessConfig struct {
 	ServerPort      int                   `json:"server_port"`
 	TLS             int                   `json:"tls"`
 	Network         string                `json:"network"`
-	TlsConfig       *conf.TLSConfig       `json:"tls_settings"`
-	WebSocketConfig *conf.WebSocketConfig `json:"ws_settings,omitempty"`
-	H2Config        *conf.HTTPConfig      `json:"h2_config"`
-	TcpConfig       *conf.TCPConfig       `json:"tcp_settings,omitempty"`
-	GrpcConfig      *conf.GRPCConfig      `json:"grpc_settings,omitempty"`
-	RouterSettings  *conf.RouterConfig    `json:"router_settings,omitempty"`
-	DnsSettings     *conf.DNSConfig       `json:"dns_settings,omitempty"`
+	TlsConfig       *xray.TLSConfig       `json:"tls_settings"`
+	WebSocketConfig *xray.WebSocketConfig `json:"ws_settings,omitempty"`
+	H2Config        *xray.HTTPConfig      `json:"h2_config"`
+	TcpConfig       *xray.TCPConfig       `json:"tcp_settings,omitempty"`
+	GrpcConfig      *xray.GRPCConfig      `json:"grpc_settings,omitempty"`
+	RouterSettings  *xray.RouterConfig    `json:"router_settings,omitempty"`
+	DnsSettings     *xray.DNSConfig       `json:"dns_settings,omitempty"`
 }
 
 func (n *VMessConfig) String() string {
