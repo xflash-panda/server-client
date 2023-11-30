@@ -136,3 +136,11 @@ func UnmarshalUsers(data []byte) (*[]User, error) {
 	}
 	return resp.Data, nil
 }
+
+func MarshalTraffics(traffics []*UserTraffic) ([]byte, error) {
+	return json.Marshal(traffics)
+}
+
+func MarshalTrafficStats(stats TrafficStats) ([]byte, error) {
+	return json.Marshal(stats)
+}
