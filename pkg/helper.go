@@ -141,6 +141,6 @@ func MarshalTraffics(traffics []*UserTraffic) ([]byte, error) {
 	return json.Marshal(traffics)
 }
 
-func MarshalTrafficStats(stats TrafficStats) ([]byte, error) {
+func MarshalTrafficStats(stats *TrafficStats) ([]byte, error) {
 	return json.Marshal(stats)
 }
