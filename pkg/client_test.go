@@ -44,6 +44,7 @@ func TestSubmit(t *testing.T) {
 			UID:      userInfo.ID,
 			Upload:   114514,
 			Download: 114514,
+			Count:    33,
 		}
 	}
 	//client.Debug()
@@ -65,6 +66,7 @@ func TestSubmitWithAgent(t *testing.T) {
 			UID:      userInfo.ID,
 			Upload:   114514,
 			Download: 114514,
+			Count:    22,
 		}
 	}
 	err = client.SubmitWithAgent(1, Hysteria2, generalUserTraffic)
