@@ -116,7 +116,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 	return resp.Data, nil
 }
 
-func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
+func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, hash string, err error) {
 	var path = fmt.Sprintf("/api/v1/server/%s/users", nodeType)
 	var eTagKey = fmt.Sprintf("users_%s_%d", nodeType, nodeId)
 	var eTagValue string
@@ -126,40 +126,39 @@ func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, err
 	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
 
 	if err != nil {
-		return nil, fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return nil, "", fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}
 
 	if res.StatusCode() == 304 {
-		return nil, ErrorUserNotModified
+		return nil, "", ErrorUserNotModified
 	}
 
 	if res.StatusCode() > 400 {
 		body := res.Body()
-		return nil, fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return nil, "", fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
 	}
 	// update etag
-	if res.Header().Get("Etag") != "" {
-		c.eTags.Store(eTagKey, res.Header().Get("Etag"))
-	}
-	return res.Body(), nil
+	hash = res.Header().Get("Etag")
+	c.eTags.Store(eTagKey, hash)
+	return res.Body(), hash, nil
 }
 
 // Users will pull users form server
-func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
-	rawData, err := c.RawUsers(nodeId, nodeType)
+func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, hash string, err error) {
+	rawData, hash, err := c.RawUsers(nodeId, nodeType)
 	if err != nil {
-		return nil, err
+		return nil, hash, err
 	}
 	var resp RespUsers
 	if err := json.Unmarshal(rawData, &resp); err != nil {
-		return nil, fmt.Errorf("parse response failed: %s", err)
+		return nil, hash, fmt.Errorf("parse response failed: %s", err)
 	}
 
 	if len(resp.Message) > 0 {
-		return nil, fmt.Errorf("api error, message: %s", resp.Message)
+		return nil, hash, fmt.Errorf("api error, message: %s", resp.Message)
 	}
 
-	return resp.Data, nil
+	return resp.Data, hash, nil
 }
 
 // Submit reports the user traffic
