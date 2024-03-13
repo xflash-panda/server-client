@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"github.com/xflash-panda/server-client/pkg/xray"
 	"strings"
@@ -14,6 +15,10 @@ const (
 	Hysteria    NodeType = "hysteria"
 	Hysteria2   NodeType = "hysteria2"
 	VMess       NodeType = "vmess"
+)
+
+var (
+	ErrorUserNotModified = errors.New("users not modified")
 )
 
 type NodeType string

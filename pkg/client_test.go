@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -26,10 +27,24 @@ func TestConfig(t *testing.T) {
 func TestUsers(t *testing.T) {
 	client := CreateClient()
 	userList, err := client.Users(1, Hysteria2)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
 	}
 	t.Log(userList)
+}
+
+func TestUsers2(t *testing.T) {
+	client := CreateClient()
+	userList, err := client.Users(1, Hysteria2)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(len(*userList))
+
+	userList, err = client.Users(1, Hysteria2)
+	if err != nil && !errors.Is(err, ErrorUserNotModified) {
+		t.Error(err)
+	}
 }
 
 func TestSubmit(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,7 @@ type Config struct {
 type Client struct {
 	client *resty.Client
 	config *Config
+	eTags  sync.Map
 }
 
 // New creat a api instance
@@ -116,18 +118,30 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 
 func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
 	var path = fmt.Sprintf("/api/v1/server/%s/users", nodeType)
-	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).ForceContentType("application/json").Get(path)
+	var eTagKey = fmt.Sprintf("users_%s_%d", nodeType, nodeId)
+	var eTagValue string
+	if value, ok := c.eTags.Load(eTagKey); ok {
+		eTagValue = value.(string)
+	}
+	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
 
 	if err != nil {
 		return nil, fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+	}
+
+	if res.StatusCode() == 304 {
+		return nil, ErrorUserNotModified
 	}
 
 	if res.StatusCode() > 400 {
 		body := res.Body()
 		return nil, fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
 	}
+	// update etag
+	if res.Header().Get("Etag") != "" {
+		c.eTags.Store(eTagKey, res.Header().Get("Etag"))
+	}
 	return res.Body(), nil
-
 }
 
 // Users will pull users form server
