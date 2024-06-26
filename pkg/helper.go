@@ -69,8 +69,7 @@ func AsConfig[T NodeConfig](nc NodeConfig) (T, error) {
 }
 
 func UnmarshalHysteria2Config(data []byte) (*Hysteria2Config, error) {
-	var resp RespConfig
-	resp = RespConfig{
+	var resp RespConfig = RespConfig{
 		Data: &Hysteria2Config{},
 	}
 	err := json.Unmarshal(data, &resp)
@@ -81,8 +80,7 @@ func UnmarshalHysteria2Config(data []byte) (*Hysteria2Config, error) {
 }
 
 func UnmarshalHysteriaConfig(data []byte) (*HysteriaConfig, error) {
-	var resp RespConfig
-	resp = RespConfig{
+	var resp RespConfig = RespConfig{
 		Data: &HysteriaConfig{},
 	}
 	err := json.Unmarshal(data, &resp)
@@ -93,8 +91,7 @@ func UnmarshalHysteriaConfig(data []byte) (*HysteriaConfig, error) {
 }
 
 func UnmarshalTrojanConfig(data []byte) (*TrojanConfig, error) {
-	var resp RespConfig
-	resp = RespConfig{
+	var resp RespConfig = RespConfig{
 		Data: &TrojanConfig{},
 	}
 	err := json.Unmarshal(data, &resp)
@@ -105,8 +102,7 @@ func UnmarshalTrojanConfig(data []byte) (*TrojanConfig, error) {
 }
 
 func UnmarshalShadowsocksConfig(data []byte) (*ShadowsocksConfig, error) {
-	var resp RespConfig
-	resp = RespConfig{
+	var resp RespConfig = RespConfig{
 		Data: &ShadowsocksConfig{},
 	}
 	err := json.Unmarshal(data, &resp)
@@ -117,8 +113,7 @@ func UnmarshalShadowsocksConfig(data []byte) (*ShadowsocksConfig, error) {
 }
 
 func UnmarshalVMessConfig(data []byte) (*VMessConfig, error) {
-	var resp RespConfig
-	resp = RespConfig{
+	var resp RespConfig = RespConfig{
 		Data: &VMessConfig{},
 	}
 	err := json.Unmarshal(data, &resp)

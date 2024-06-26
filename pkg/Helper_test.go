@@ -39,7 +39,7 @@ func TestUnmarshalHysteriaConfig(t *testing.T) {
 func TestUnmarshalUsers(t *testing.T) {
 	client := CreateClient()
 	client.Debug(false)
-	usersBytes, err := client.RawUsers(1, Hysteria2)
+	usersBytes, _, err := client.RawUsers(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}

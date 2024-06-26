@@ -100,8 +100,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 		return nil, fmt.Errorf("invalid config type: %s", nodeType)
 	}
 
-	var resp RespConfig
-	resp = RespConfig{
+	var resp RespConfig = RespConfig{
 		Data: factoryFunc(),
 	}
 

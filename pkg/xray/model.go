@@ -118,6 +118,6 @@ type Address struct {
 }
 
 type HostAddress struct {
-	addr  *Address
-	addrs []*Address
+	_ *Address
+	_ []*Address
 }

@@ -26,22 +26,25 @@ func TestConfig(t *testing.T) {
 
 func TestUsers(t *testing.T) {
 	client := CreateClient()
-	userList, err := client.Users(1, Hysteria2)
+	userList, _, err := client.Users(1, Hysteria2)
+	t.Log(len(*userList))
+
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
 	}
-	t.Log(userList)
 }
 
 func TestUsers2(t *testing.T) {
 	client := CreateClient()
-	userList, err := client.Users(1, Hysteria2)
+	userList, _, err := client.Users(1, Hysteria2)
+	t.Log(len(*userList))
+
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(len(*userList))
 
-	userList, err = client.Users(1, Hysteria2)
+	userList, _, err = client.Users(1, Hysteria2)
+	t.Log(len(*userList))
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
 	}
@@ -49,7 +52,7 @@ func TestUsers2(t *testing.T) {
 
 func TestSubmit(t *testing.T) {
 	client := CreateClient()
-	users, err := client.Users(1, Hysteria2)
+	users, _, err := client.Users(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -71,7 +74,7 @@ func TestSubmit(t *testing.T) {
 
 func TestSubmitWithAgent(t *testing.T) {
 	client := CreateClient()
-	users, err := client.Users(1, Hysteria2)
+	users, _, err := client.Users(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
