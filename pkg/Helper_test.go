@@ -36,6 +36,20 @@ func TestUnmarshalHysteriaConfig(t *testing.T) {
 	t.Log(hy2Config.ID)
 }
 
+func TestUnmarshalAnyTLSConfig(t *testing.T) {
+	client := CreateClient()
+	client.Debug(false)
+	configBytes, err := client.RawConfig(1, AnyTLS)
+	if err != nil {
+		t.Error(err)
+	}
+	anytlsConfig, err := UnmarshalAnyTLSConfig(configBytes)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(anytlsConfig.ID)
+}
+
 func TestUnmarshalUsers(t *testing.T) {
 	client := CreateClient()
 	client.Debug(false)

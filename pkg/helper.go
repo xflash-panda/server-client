@@ -76,70 +76,42 @@ func AsConfig[T NodeConfig](nc NodeConfig) (T, error) {
 	return tConfig, nil
 }
 
-func UnmarshalHysteria2Config(data []byte) (*Hysteria2Config, error) {
-	var resp RespConfig = RespConfig{
-		Data: &Hysteria2Config{},
+// UnmarshalConfig 是一个通用的泛型反序列化函数
+func UnmarshalConfig[T any](data []byte) (*T, error) {
+	var resp struct {
+		Data    *T     `json:"data"`
+		Message string `json:"message"`
 	}
 	err := json.Unmarshal(data, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
-	return resp.Data.(*Hysteria2Config), nil
+	return resp.Data, nil
+}
+
+// 使用泛型函数重写原有的 Unmarshal 函数
+func UnmarshalHysteria2Config(data []byte) (*Hysteria2Config, error) {
+	return UnmarshalConfig[Hysteria2Config](data)
 }
 
 func UnmarshalHysteriaConfig(data []byte) (*HysteriaConfig, error) {
-	var resp RespConfig = RespConfig{
-		Data: &HysteriaConfig{},
-	}
-	err := json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %w", err)
-	}
-	return resp.Data.(*HysteriaConfig), nil
+	return UnmarshalConfig[HysteriaConfig](data)
 }
 
 func UnmarshalTrojanConfig(data []byte) (*TrojanConfig, error) {
-	var resp RespConfig = RespConfig{
-		Data: &TrojanConfig{},
-	}
-	err := json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %w", err)
-	}
-	return resp.Data.(*TrojanConfig), nil
+	return UnmarshalConfig[TrojanConfig](data)
 }
 
 func UnmarshalShadowsocksConfig(data []byte) (*ShadowsocksConfig, error) {
-	var resp RespConfig = RespConfig{
-		Data: &ShadowsocksConfig{},
-	}
-	err := json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %w", err)
-	}
-	return resp.Data.(*ShadowsocksConfig), nil
+	return UnmarshalConfig[ShadowsocksConfig](data)
 }
 
 func UnmarshalVMessConfig(data []byte) (*VMessConfig, error) {
-	var resp RespConfig = RespConfig{
-		Data: &VMessConfig{},
-	}
-	err := json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %w", err)
-	}
-	return resp.Data.(*VMessConfig), nil
+	return UnmarshalConfig[VMessConfig](data)
 }
 
 func UnmarshalAnyTLSConfig(data []byte) (*AnyTLSConfig, error) {
-	var resp RespConfig = RespConfig{
-		Data: &AnyTLSConfig{},
-	}
-	err := json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %w", err)
-	}
-	return resp.Data.(*AnyTLSConfig), nil
+	return UnmarshalConfig[AnyTLSConfig](data)
 }
 
 func UnmarshalUsers(data []byte) (*[]User, error) {
