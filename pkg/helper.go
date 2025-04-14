@@ -46,6 +46,14 @@ func AsShadowsocksConfig(nc NodeConfig) (*ShadowsocksConfig, error) {
 	return config, nil
 }
 
+func AsAnyTLSConfig(nc NodeConfig) (*AnyTLSConfig, error) {
+	config, err := AsConfig[*AnyTLSConfig](nc)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
 func AsConfig[T NodeConfig](nc NodeConfig) (T, error) {
 	// 创建类型 T 的零值
 	var zero T
@@ -121,6 +129,17 @@ func UnmarshalVMessConfig(data []byte) (*VMessConfig, error) {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 	return resp.Data.(*VMessConfig), nil
+}
+
+func UnmarshalAnyTLSConfig(data []byte) (*AnyTLSConfig, error) {
+	var resp RespConfig = RespConfig{
+		Data: &AnyTLSConfig{},
+	}
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+	return resp.Data.(*AnyTLSConfig), nil
 }
 
 func UnmarshalUsers(data []byte) (*[]User, error) {

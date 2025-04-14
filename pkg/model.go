@@ -146,6 +146,22 @@ func (n *VMessConfig) TypeName() string {
 	return string(VMess)
 }
 
+type AnyTLSConfig struct {
+	ID            int    `json:"id"`
+	ServerPort    int    `json:"server_port"`
+	AllowInsecure int    `json:"allow_insecure"`
+	ServerName    string `json:"server_name"`
+	PaddingRules  string `json:"padding_rules"`
+}
+
+func (n *AnyTLSConfig) String() string {
+	return fmt.Sprintf("AnyTLSConfig: %#v", n)
+}
+
+func (n *AnyTLSConfig) TypeName() string {
+	return string(AnyTLS)
+}
+
 type User struct {
 	ID   int    `json:"id"`
 	UUID string `json:"uuid"`
