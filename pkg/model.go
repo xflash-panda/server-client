@@ -3,8 +3,9 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"github.com/xflash-panda/server-client/pkg/xray"
 	"strings"
+
+	"github.com/xflash-panda/server-client/pkg/xray"
 )
 
 // API is the interface for different panel's api.
@@ -15,6 +16,7 @@ const (
 	Hysteria    NodeType = "hysteria"
 	Hysteria2   NodeType = "hysteria2"
 	VMess       NodeType = "vmess"
+	AnyTLS      NodeType = "anytls"
 )
 
 var (
