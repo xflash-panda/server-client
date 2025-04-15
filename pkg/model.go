@@ -40,6 +40,7 @@ var configFactories = map[NodeType]configFactoryFunc{
 	Trojan:      func() NodeConfig { return &TrojanConfig{} },
 	ShadowSocks: func() NodeConfig { return &ShadowsocksConfig{} },
 	VMess:       func() NodeConfig { return &VMessConfig{} },
+	AnyTLS:      func() NodeConfig { return &AnyTLSConfig{} },
 }
 
 type NodeConfig interface {
