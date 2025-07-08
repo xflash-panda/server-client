@@ -114,8 +114,7 @@ type HostsWrapper struct {
 	Hosts map[string]*HostAddress
 }
 
-type Address struct {
-}
+type Address struct{}
 
 type HostAddress struct {
 	_ *Address

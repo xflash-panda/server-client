@@ -19,9 +19,7 @@ const (
 	AnyTLS      NodeType = "anytls"
 )
 
-var (
-	ErrorUserNotModified = errors.New("users not modified")
-)
+var ErrorUserNotModified = errors.New("users not modified")
 
 type NodeType string
 
@@ -189,6 +187,8 @@ type RespSubmit struct {
 	Data    bool   `json:"data"`
 	Message string `json:"message"`
 }
-type RespHeartBeat RespSubmit
-type RespSubmitWithAgent RespSubmit
-type RespSubmitStatsWithAgent RespSubmit
+type (
+	RespHeartBeat            RespSubmit
+	RespSubmitWithAgent      RespSubmit
+	RespSubmitStatsWithAgent RespSubmit
+)

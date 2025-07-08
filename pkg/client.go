@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty/v2"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 	"time"
+
+	resty "github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 // Config  api config
@@ -71,12 +72,11 @@ func (c *Client) assembleURL(path string) string {
 }
 
 func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
-	var path = fmt.Sprintf("/api/v1/server/%s/config", nodeType)
+	path := fmt.Sprintf("/api/v1/server/%s/config", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		Get(path)
-
 	if err != nil {
 		return nil, fmt.Errorf("request %s failed: %w", c.assembleURL(path), err)
 	}
@@ -116,14 +116,13 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 }
 
 func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, hash string, err error) {
-	var path = fmt.Sprintf("/api/v1/server/%s/users", nodeType)
-	var eTagKey = fmt.Sprintf("users_%s_%d", nodeType, nodeId)
+	path := fmt.Sprintf("/api/v1/server/%s/users", nodeType)
+	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, nodeId)
 	var eTagValue string
 	if value, ok := c.eTags.Load(eTagKey); ok {
 		eTagValue = value.(string)
 	}
 	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
-
 	if err != nil {
 		return nil, "", fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}
@@ -162,7 +161,7 @@ func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, hash
 
 // Submit reports the user traffic
 func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/submit", nodeType)
+	path := fmt.Sprintf("/api/v1/server/%s/submit", nodeType)
 	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetBody(userTraffic).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
@@ -184,7 +183,7 @@ func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTra
 }
 
 func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/submitWithAgent", nodeType)
+	path := fmt.Sprintf("/api/v1/server/%s/submitWithAgent", nodeType)
 	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId))}).SetBody(userTraffic).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
@@ -206,7 +205,7 @@ func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic [
 }
 
 func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", nodeType)
+	path := fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", nodeType)
 	res, err := c.client.R().SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).SetBody(stats).Post(path)
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
@@ -228,12 +227,11 @@ func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp s
 }
 
 func (c *Client) Heartbeat(nodeId NodeId, nodeType NodeType, nodeIp string) error {
-	var path = fmt.Sprintf("/api/v1/server/%s/heartbeat", nodeType)
+	path := fmt.Sprintf("/api/v1/server/%s/heartbeat", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).
 		Get(path)
-
 	if err != nil {
 		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
 	}

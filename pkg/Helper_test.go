@@ -12,7 +12,7 @@ func TestAsHysteria2(t *testing.T) {
 		t.Error(err)
 	}
 
-	//hy2Config := config.(*Hysteria2Config)
+	// hy2Config := config.(*Hysteria2Config)
 	hy2Config, err := AsHysteria2Config(config)
 	if err != nil {
 		t.Error(err)

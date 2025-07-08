@@ -65,7 +65,7 @@ func TestSubmit(t *testing.T) {
 			Count:    33,
 		}
 	}
-	//client.Debug()
+	// client.Debug()
 	err = client.Submit(1, Hysteria2, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
