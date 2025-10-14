@@ -71,13 +71,19 @@ func (c *Client) assembleURL(path string) string {
 	return c.config.APIHost + path
 }
 
-func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, clientIp string) (registerId int, config NodeConfig, err error) {
+func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId int, config NodeConfig, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/register", nodeType)
 	url := c.assembleURL(path)
+
+	body := map[string]interface{}{"hostname": hostname, "port": port}
+	if nodeIp != "" {
+		body["node_ip"] = nodeIp
+	}
+
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
-		SetBody(map[string]interface{}{"hostname": hostname, "port": port, "client_ip": clientIp}).
+		SetBody(body).
 		Post(path)
 	if err != nil {
 		return 0, nil, NewNetworkError("request failed", url, err)
