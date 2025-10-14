@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -19,7 +18,8 @@ const (
 	AnyTLS      NodeType = "anytls"
 )
 
-var ErrorUserNotModified = errors.New("users not modified")
+// ErrorUserNotModified 用户数据未修改错误 (304)
+var ErrorUserNotModified = NewNotModifiedError()
 
 type NodeType string
 

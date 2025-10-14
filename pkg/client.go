@@ -73,17 +73,18 @@ func (c *Client) assembleURL(path string) string {
 
 func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
 	path := fmt.Sprintf("/api/v1/server/%s/config", nodeType)
+	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		Get(path)
 	if err != nil {
-		return nil, fmt.Errorf("request %s failed: %w", c.assembleURL(path), err)
+		return nil, NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return nil, fmt.Errorf("request %s failed: %s, %w", c.assembleURL(path), string(body), err)
+		return nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	return res.Body(), nil
@@ -92,12 +93,12 @@ func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, er
 func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
 	rawData, err := c.RawConfig(nodeId, nodeType)
 	if err != nil {
-		return nil, err // 错误已经被 GetRawConfig 格式化，直接返回即可
+		return nil, err // 错误已经被 RawConfig 格式化，直接返回即可
 	}
 
 	factoryFunc, ok := configFactories[NodeType(nodeType.String())]
 	if !ok {
-		return nil, fmt.Errorf("invalid config type: %s", nodeType)
+		return nil, NewBusinessLogicError(fmt.Sprintf("invalid config type: %s", nodeType), "")
 	}
 
 	var resp RespConfig = RespConfig{
@@ -105,11 +106,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 	}
 
 	if err := json.Unmarshal(rawData, &resp); err != nil {
-		return nil, fmt.Errorf("parse response failed: %w", err)
-	}
-
-	if len(resp.Message) > 0 {
-		return nil, fmt.Errorf("api error, message: %s", resp.Message)
+		return nil, NewParseError("parse response failed", err)
 	}
 
 	return resp.Data, nil
@@ -117,6 +114,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 
 func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, hash string, err error) {
 	path := fmt.Sprintf("/api/v1/server/%s/users", nodeType)
+	url := c.assembleURL(path)
 	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, nodeId)
 	var eTagValue string
 	if value, ok := c.eTags.Load(eTagKey); ok {
@@ -124,16 +122,16 @@ func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, has
 	}
 	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
 	if err != nil {
-		return nil, "", fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return nil, "", NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() == 304 {
 		return nil, "", ErrorUserNotModified
 	}
 
-	if res.StatusCode() > 400 {
+	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return nil, "", fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return nil, "", NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 	// update etag
 	hash = res.Header().Get("Etag")
@@ -149,11 +147,7 @@ func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, hash
 	}
 	var resp RespUsers
 	if err := json.Unmarshal(rawData, &resp); err != nil {
-		return nil, hash, fmt.Errorf("parse response failed: %s", err)
-	}
-
-	if len(resp.Message) > 0 {
-		return nil, hash, fmt.Errorf("api error, message: %s", resp.Message)
+		return nil, hash, NewParseError("parse response failed", err)
 	}
 
 	return resp.Data, hash, nil
@@ -162,84 +156,79 @@ func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, hash
 // Submit reports the user traffic
 func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/%s/submit", nodeType)
+	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		SetBody(userTraffic).
 		Post(path)
 	if err != nil {
-		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return NewNetworkError("request failed", url, err)
 	}
 
-	if res.StatusCode() > 400 {
+	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	var resp RespSubmit
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		return fmt.Errorf("parse response failed: %s", err)
-	}
-	if len(resp.Message) > 0 {
-		return fmt.Errorf("api error, message: %s", resp.Message)
+		return NewParseError("parse response failed", err)
 	}
 	return nil
 }
 
 func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/%s/submitWithAgent", nodeType)
+	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId))}).
 		SetBody(userTraffic).
 		Post(path)
 	if err != nil {
-		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return NewNetworkError("request failed", url, err)
 	}
 
-	if res.StatusCode() > 400 {
+	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	var resp RespSubmitWithAgent
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		return fmt.Errorf("parse response failed: %s", err)
-	}
-	if len(resp.Message) > 0 {
-		return fmt.Errorf("api error, message: %s", resp.Message)
+		return NewParseError("parse response failed", err)
 	}
 	return nil
 }
 
 func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
 	path := fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", nodeType)
+	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).
 		SetBody(stats).
 		Post(path)
 	if err != nil {
-		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return NewNetworkError("request failed", url, err)
 	}
 
-	if res.StatusCode() > 400 {
+	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	var resp RespSubmitWithAgent
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		return fmt.Errorf("parse response failed: %s", err)
-	}
-	if len(resp.Message) > 0 {
-		return fmt.Errorf("api error, message: %s", resp.Message)
+		return NewParseError("parse response failed", err)
 	}
 	return nil
 }
 
 func (c *Client) Heartbeat(nodeId NodeId, nodeType NodeType, nodeIp string) error {
 	path := fmt.Sprintf("/api/v1/server/%s/heartbeat", nodeType)
+	url := c.assembleURL(path)
 	req := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId)))
@@ -251,20 +240,17 @@ func (c *Client) Heartbeat(nodeId NodeId, nodeType NodeType, nodeIp string) erro
 
 	res, err := req.Get(path)
 	if err != nil {
-		return fmt.Errorf("request %s failed: %s", c.assembleURL(path), err)
+		return NewNetworkError("request failed", url, err)
 	}
 
-	if res.StatusCode() > 400 {
+	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return fmt.Errorf("request %s failed: %s, %s", c.assembleURL(path), string(body), err)
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	var respHeartBeat RespHeartBeat
 	if err := json.Unmarshal(res.Body(), &respHeartBeat); err != nil {
-		return fmt.Errorf("parse response failed: %s", err)
-	}
-	if len(respHeartBeat.Message) > 0 {
-		return fmt.Errorf("api error, message: %s", respHeartBeat.Message)
+		return NewParseError("parse response failed", err)
 	}
 	return nil
 }
