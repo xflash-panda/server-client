@@ -172,21 +172,26 @@ func (c *Client) Users(registerId int, nodeType NodeType) (UserList *[]User, has
 }
 
 // Submit reports the user traffic
-func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
+func (c *Client) Submit(registerId int, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submit", nodeType)
 	url := c.assembleURL(path)
+
+	body := map[string]interface{}{
+		"register_id": registerId,
+		"data":        userTraffic,
+	}
+
 	res, err := c.client.R().
 		ForceContentType("application/json").
-		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
-		SetBody(userTraffic).
+		SetBody(body).
 		Post(path)
 	if err != nil {
 		return NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		body := res.Body()
-		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		respBody := res.Body()
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(respBody), url, nil)
 	}
 
 	var resp RespSubmit
@@ -244,26 +249,26 @@ func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp s
 	return nil
 }
 
-func (c *Client) Heartbeat(nodeId NodeId, nodeType NodeType, nodeIp string) error {
+func (c *Client) Heartbeat(registerId int, nodeType NodeType, nodeIp string) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/heartbeat", nodeType)
 	url := c.assembleURL(path)
-	req := c.client.R().
-		ForceContentType("application/json").
-		SetQueryParam("node_id", strconv.Itoa(int(nodeId)))
 
-	// 只在 nodeIp 不为空时才添加查询参数
+	body := map[string]interface{}{"register_id": registerId}
 	if nodeIp != "" {
-		req.SetQueryParam("node_ip", nodeIp)
+		body["node_ip"] = nodeIp
 	}
 
-	res, err := req.Get(path)
+	res, err := c.client.R().
+		ForceContentType("application/json").
+		SetBody(body).
+		Post(path)
 	if err != nil {
 		return NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		body := res.Body()
-		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		respBody := res.Body()
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(respBody), url, nil)
 	}
 
 	var respHeartBeat RespHeartBeat
