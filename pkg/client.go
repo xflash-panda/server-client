@@ -71,49 +71,41 @@ func (c *Client) assembleURL(path string) string {
 	return c.config.APIHost + path
 }
 
-func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
-	path := fmt.Sprintf("/api/v1/server/%s/config", nodeType)
+func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, clientIp string) (registerId int, config NodeConfig, err error) {
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/register", nodeType)
 	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
-		Get(path)
+		SetBody(map[string]interface{}{"hostname": hostname, "port": port, "client_ip": clientIp}).
+		Post(path)
 	if err != nil {
-		return nil, NewNetworkError("request failed", url, err)
+		return 0, nil, NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
-	}
-
-	return res.Body(), nil
-}
-
-func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
-	rawData, err := c.RawConfig(nodeId, nodeType)
-	if err != nil {
-		return nil, err // 错误已经被 RawConfig 格式化，直接返回即可
+		return 0, nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	factoryFunc, ok := configFactories[NodeType(nodeType.String())]
 	if !ok {
-		return nil, NewBusinessLogicError(fmt.Sprintf("invalid config type: %s", nodeType), "")
+		return 0, nil, NewBusinessLogicError(fmt.Sprintf("invalid config type: %s", nodeType), "")
 	}
 
-	var resp RespConfig = RespConfig{
-		Data: factoryFunc(),
+	var resp RespRegister = RespRegister{
+		Config: factoryFunc(),
 	}
 
-	if err := json.Unmarshal(rawData, &resp); err != nil {
-		return nil, NewParseError("parse response failed", err)
+	if err := json.Unmarshal(res.Body(), &resp); err != nil {
+		return 0, nil, NewParseError("parse response failed", err)
 	}
 
-	return resp.Data, nil
+	return resp.RegisterId, resp.Config, nil
 }
 
 func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, hash string, err error) {
-	path := fmt.Sprintf("/api/v1/server/%s/users", nodeType)
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
 	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, nodeId)
 	var eTagValue string
@@ -155,7 +147,7 @@ func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, hash
 
 // Submit reports the user traffic
 func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
-	path := fmt.Sprintf("/api/v1/server/%s/submit", nodeType)
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submit", nodeType)
 	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
@@ -179,7 +171,7 @@ func (c *Client) Submit(nodeId NodeId, nodeType NodeType, userTraffic []*UserTra
 }
 
 func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
-	path := fmt.Sprintf("/api/v1/server/%s/submitWithAgent", nodeType)
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitWithAgent", nodeType)
 	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
@@ -203,7 +195,7 @@ func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic [
 }
 
 func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
-	path := fmt.Sprintf("/api/v1/server/%s/submitStatsWithAgent", nodeType)
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitStatsWithAgent", nodeType)
 	url := c.assembleURL(path)
 	res, err := c.client.R().
 		ForceContentType("application/json").
@@ -227,7 +219,7 @@ func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp s
 }
 
 func (c *Client) Heartbeat(nodeId NodeId, nodeType NodeType, nodeIp string) error {
-	path := fmt.Sprintf("/api/v1/server/%s/heartbeat", nodeType)
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/heartbeat", nodeType)
 	url := c.assembleURL(path)
 	req := c.client.R().
 		ForceContentType("application/json").

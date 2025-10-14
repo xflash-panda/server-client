@@ -183,6 +183,11 @@ type RespConfig struct {
 	Message string     `json:"message"`
 }
 
+type RespRegister struct {
+	RegisterId int        `json:"register_id"`
+	Config     NodeConfig `json:"config"`
+}
+
 type RespSubmit struct {
 	Data    bool   `json:"data"`
 	Message string `json:"message"`
