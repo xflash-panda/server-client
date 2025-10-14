@@ -201,21 +201,26 @@ func (c *Client) Submit(registerId int, nodeType NodeType, userTraffic []*UserTr
 	return nil
 }
 
-func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic []*UserTraffic) error {
+func (c *Client) SubmitWithAgent(registerId int, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitWithAgent", nodeType)
 	url := c.assembleURL(path)
+
+	body := map[string]interface{}{
+		"register_id": registerId,
+		"data":        userTraffic,
+	}
+
 	res, err := c.client.R().
 		ForceContentType("application/json").
-		SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId))}).
-		SetBody(userTraffic).
+		SetBody(body).
 		Post(path)
 	if err != nil {
 		return NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		body := res.Body()
-		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		respBody := res.Body()
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(respBody), url, nil)
 	}
 
 	var resp RespSubmitWithAgent
@@ -225,21 +230,29 @@ func (c *Client) SubmitWithAgent(nodeId NodeId, nodeType NodeType, userTraffic [
 	return nil
 }
 
-func (c *Client) SubmitStatsWithAgent(nodeId NodeId, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
+func (c *Client) SubmitStatsWithAgent(registerId int, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitStatsWithAgent", nodeType)
 	url := c.assembleURL(path)
+
+	body := map[string]interface{}{
+		"register_id": registerId,
+		"data":        stats,
+	}
+	if nodeIp != "" {
+		body["node_ip"] = nodeIp
+	}
+
 	res, err := c.client.R().
 		ForceContentType("application/json").
-		SetQueryParams(map[string]string{"node_id": strconv.Itoa(int(nodeId)), "node_ip": nodeIp}).
-		SetBody(stats).
+		SetBody(body).
 		Post(path)
 	if err != nil {
 		return NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		body := res.Body()
-		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		respBody := res.Body()
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(respBody), url, nil)
 	}
 
 	var resp RespSubmitWithAgent
