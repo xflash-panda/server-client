@@ -130,15 +130,15 @@ func (c *Client) Unregister(nodeType NodeType, registerId int) error {
 	return nil
 }
 
-func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, hash string, err error) {
+func (c *Client) RawUsers(registerId int, nodeType NodeType) (rawData []byte, hash string, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
-	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, nodeId)
+	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, registerId)
 	var eTagValue string
 	if value, ok := c.eTags.Load(eTagKey); ok {
 		eTagValue = value.(string)
 	}
-	res, err := c.client.R().SetQueryParam("node_id", strconv.Itoa(int(nodeId))).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
+	res, err := c.client.R().SetQueryParam("register_id", strconv.Itoa(registerId)).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
 	if err != nil {
 		return nil, "", NewNetworkError("request failed", url, err)
 	}
@@ -158,8 +158,8 @@ func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, has
 }
 
 // Users will pull users form server
-func (c *Client) Users(nodeId NodeId, nodeType NodeType) (UserList *[]User, hash string, err error) {
-	rawData, hash, err := c.RawUsers(nodeId, nodeType)
+func (c *Client) Users(registerId int, nodeType NodeType) (UserList *[]User, hash string, err error) {
+	rawData, hash, err := c.RawUsers(registerId, nodeType)
 	if err != nil {
 		return nil, hash, err
 	}
