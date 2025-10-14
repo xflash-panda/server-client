@@ -110,6 +110,26 @@ func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, por
 	return resp.RegisterId, resp.Config, nil
 }
 
+func (c *Client) Unregister(nodeType NodeType, registerId int) error {
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/unregister", nodeType)
+	url := c.assembleURL(path)
+
+	res, err := c.client.R().
+		ForceContentType("application/json").
+		SetQueryParam("register_id", strconv.Itoa(registerId)).
+		Post(path)
+	if err != nil {
+		return NewNetworkError("request failed", url, err)
+	}
+
+	if res.StatusCode() >= 400 {
+		body := res.Body()
+		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+	}
+
+	return nil
+}
+
 func (c *Client) RawUsers(nodeId NodeId, nodeType NodeType) (rawData []byte, hash string, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
