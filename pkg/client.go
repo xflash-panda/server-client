@@ -71,7 +71,42 @@ func (c *Client) assembleURL(path string) string {
 	return c.config.APIHost + path
 }
 
-func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId int, config NodeConfig, err error) {
+// Config get node config by nodeId
+func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/config", nodeType)
+	url := c.assembleURL(path)
+
+	res, err := c.client.R().
+		ForceContentType("application/json").
+		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
+		Get(path)
+	if err != nil {
+		return nil, NewNetworkError("request failed", url, err)
+	}
+
+	if res.StatusCode() >= 400 {
+		body := res.Body()
+		return nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+	}
+
+	factoryFunc, ok := configFactories[NodeType(nodeType.String())]
+	if !ok {
+		return nil, NewBusinessLogicError(fmt.Sprintf("invalid config type: %s", nodeType), "")
+	}
+
+	var resp RespConfig = RespConfig{
+		Data: factoryFunc(),
+	}
+
+	if err := json.Unmarshal(res.Body(), &resp); err != nil {
+		return nil, NewParseError("parse response failed", err)
+	}
+
+	return resp.Data, nil
+}
+
+// Register register node and return register_id
+func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId int, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/register", nodeType)
 	url := c.assembleURL(path)
 
@@ -86,28 +121,23 @@ func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, por
 		SetBody(body).
 		Post(path)
 	if err != nil {
-		return 0, nil, NewNetworkError("request failed", url, err)
+		return 0, NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return 0, nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		return 0, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
-	factoryFunc, ok := configFactories[NodeType(nodeType.String())]
-	if !ok {
-		return 0, nil, NewBusinessLogicError(fmt.Sprintf("invalid config type: %s", nodeType), "")
-	}
-
-	var resp RespRegister = RespRegister{
-		Config: factoryFunc(),
+	var resp struct {
+		RegisterId int `json:"register_id"`
 	}
 
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		return 0, nil, NewParseError("parse response failed", err)
+		return 0, NewParseError("parse response failed", err)
 	}
 
-	return resp.RegisterId, resp.Config, nil
+	return resp.RegisterId, nil
 }
 
 func (c *Client) Unregister(nodeType NodeType, registerId int) error {

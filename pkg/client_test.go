@@ -15,13 +15,22 @@ func CreateClient() *Client {
 	return client
 }
 
-func TestRegister(t *testing.T) {
+func TestConfig(t *testing.T) {
 	client := CreateClient()
-	registerId, config, err := client.Register(1, Hysteria2, "test-hostname", 8080, "127.0.0.1")
+	config, err := client.Config(1, Hysteria2)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("RegisterId: %d, Config: %v", registerId, config)
+	t.Logf("Config: %v", config)
+}
+
+func TestRegister(t *testing.T) {
+	client := CreateClient()
+	registerId, err := client.Register(1, Hysteria2, "test-hostname", 8080, "127.0.0.1")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("RegisterId: %d", registerId)
 }
 
 func TestUsers(t *testing.T) {
