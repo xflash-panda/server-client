@@ -129,15 +129,12 @@ func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, por
 		return 0, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
-	var resp struct {
-		RegisterId int `json:"register_id"`
-	}
-
+	var resp RespRegister
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
 		return 0, NewParseError("parse response failed", err)
 	}
 
-	return resp.RegisterId, nil
+	return resp.Data.RegisterId, nil
 }
 
 func (c *Client) Unregister(nodeType NodeType, registerId int) error {
@@ -155,6 +152,11 @@ func (c *Client) Unregister(nodeType NodeType, registerId int) error {
 	if res.StatusCode() >= 400 {
 		body := res.Body()
 		return NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+	}
+
+	var resp RespUnregister
+	if err := json.Unmarshal(res.Body(), &resp); err != nil {
+		return NewParseError("failed to parse unregister response", err)
 	}
 
 	return nil
