@@ -41,7 +41,7 @@ func main() {
     client := pkg.New(config)
     
     // 调用API
-    users, hash, err := client.Users(1, pkg.VMess)
+    users, err := client.Users(1, pkg.VMess)
     if err != nil {
         handleError(err)
         return
@@ -148,7 +148,7 @@ func callAPIWithRetry(client *pkg.Client) error {
     maxRetries := 3
     
     for i := 0; i < maxRetries; i++ {
-        users, _, err := client.Users(1, pkg.VMess)
+        users, err := client.Users(1, pkg.VMess)
         if err == nil {
             // 成功
             return nil

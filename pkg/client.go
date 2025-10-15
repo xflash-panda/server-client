@@ -130,7 +130,7 @@ func (c *Client) Unregister(nodeType NodeType, registerId int) error {
 	return nil
 }
 
-func (c *Client) RawUsers(registerId int, nodeType NodeType) (rawData []byte, hash string, err error) {
+func (c *Client) RawUsers(registerId int, nodeType NodeType) (rawData []byte, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
 	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, registerId)
@@ -140,35 +140,35 @@ func (c *Client) RawUsers(registerId int, nodeType NodeType) (rawData []byte, ha
 	}
 	res, err := c.client.R().SetQueryParam("register_id", strconv.Itoa(registerId)).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
 	if err != nil {
-		return nil, "", NewNetworkError("request failed", url, err)
+		return nil, NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() == 304 {
-		return nil, "", ErrorUserNotModified
+		return nil, ErrorUserNotModified
 	}
 
 	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return nil, "", NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		return nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 	// update etag
-	hash = res.Header().Get("Etag")
+	hash := res.Header().Get("Etag")
 	c.eTags.Store(eTagKey, hash)
-	return res.Body(), hash, nil
+	return res.Body(), nil
 }
 
 // Users will pull users form server
-func (c *Client) Users(registerId int, nodeType NodeType) (UserList *[]User, hash string, err error) {
-	rawData, hash, err := c.RawUsers(registerId, nodeType)
+func (c *Client) Users(registerId int, nodeType NodeType) (UserList *[]User, err error) {
+	rawData, err := c.RawUsers(registerId, nodeType)
 	if err != nil {
-		return nil, hash, err
+		return nil, err
 	}
 	var resp RespUsers
 	if err := json.Unmarshal(rawData, &resp); err != nil {
-		return nil, hash, NewParseError("parse response failed", err)
+		return nil, NewParseError("parse response failed", err)
 	}
 
-	return resp.Data, hash, nil
+	return resp.Data, nil
 }
 
 // Submit reports the user traffic
