@@ -2,14 +2,13 @@
 
 ## 概述
 
-本项目使用自定义的 `APIError` 类型来处理API调用过程中的各种错误。`APIError` 提供了清晰的错误分类，主要区分**客户端错误**和**服务端错误**，便于快速定位问题。
+本项目使用自定义的 `APIError` 类型来处理API调用过程中的各种错误。`APIError` 提供了清晰的错误分类，便于快速定位问题。
 
 ## 错误类型
 
 ### HTTP错误
 
-- `ErrorTypeClientError` (4xx) - 客户端错误（如401、403、404等）
-- `ErrorTypeServerError` (5xx) - 服务端错误（如500、503等）
+- `ErrorTypeServerError` (4xx/5xx) - 服务端错误（所有HTTP 4xx和5xx错误都被归类为服务端错误）
 
 ### 特殊错误类型
 
@@ -55,10 +54,7 @@ func handleError(err error) {
     var apiErr *pkg.APIError
     if errors.As(err, &apiErr) {
         // 判断错误类型
-        if apiErr.IsClientError() {
-            fmt.Printf("客户端错误 [%d]: %s\n", apiErr.StatusCode, apiErr.Message)
-            fmt.Println("请检查请求参数或认证信息")
-        } else if apiErr.IsServerError() {
+        if apiErr.IsServerError() {
             fmt.Printf("服务器错误 [%d]: %s\n", apiErr.StatusCode, apiErr.Message)
             fmt.Println("服务器出现问题，请稍后重试或联系管理员")
         } else if apiErr.IsNetworkError() {
@@ -82,20 +78,14 @@ func handleError(err error) {
 
 ### 快速判断错误类型
 
-#### 判断是否为客户端或服务端错误
+#### 判断是否为服务端错误
 
 ```go
 var apiErr *pkg.APIError
 if errors.As(err, &apiErr) {
-    if apiErr.IsClientError() {
-        // 4xx错误 - 客户端问题
-        // 一般是请求参数错误、认证失败、权限不足等
-        fmt.Println("请检查请求参数或认证信息")
-    }
-
     if apiErr.IsServerError() {
-        // 5xx错误 - 服务端问题
-        // 一般是服务器内部错误、服务不可用等
+        // 4xx/5xx错误 - 服务端问题
+        // 所有HTTP错误都被归类为服务端错误
         fmt.Println("服务器出现问题，请稍后重试")
     }
 }
@@ -156,12 +146,7 @@ func callAPIWithRetry(client *pkg.Client) error {
         
         var apiErr *pkg.APIError
         if errors.As(err, &apiErr) {
-            // 客户端错误（4xx）通常不应重试
-            if apiErr.IsClientError() {
-                return fmt.Errorf("客户端错误，不重试: %w", err)
-            }
-            
-            // 服务端错误（5xx）或网络错误可以重试
+            // 服务端错误或网络错误可以重试
             if apiErr.IsServerError() || apiErr.IsNetworkError() {
                 fmt.Printf("请求失败，重试 %d/%d: %s\n", i+1, maxRetries, err)
                 time.Sleep(time.Second * time.Duration(i+1)) // 指数退避
@@ -217,9 +202,7 @@ func logError(err error) {
             "url":         apiErr.URL,
         }
         
-        if apiErr.IsClientError() {
-            log.WithFields(fields).Warn("客户端错误")
-        } else if apiErr.IsServerError() {
+        if apiErr.IsServerError() {
             log.WithFields(fields).Error("服务器错误")
         } else if apiErr.IsNetworkError() {
             log.WithFields(fields).Error("网络错误")

@@ -15,11 +15,11 @@ func main() {
 func demonstrateErrors() {
 	fmt.Println("=== 错误处理示例 ===\n")
 
-	// 示例1: 客户端错误 (401)
+	// 示例1: 服务端错误 (401)
 	err1 := pkg.NewAPIErrorFromStatusCode(401, "invalid token", "http://api.example.com/users", nil)
 	handleError("示例1: 401 Unauthorized", err1)
 
-	// 示例2: 客户端错误 (404)
+	// 示例2: 服务端错误 (404)
 	err2 := pkg.NewAPIErrorFromStatusCode(404, "user not found", "http://api.example.com/users/123", nil)
 	handleError("示例2: 404 Not Found", err2)
 
@@ -61,12 +61,8 @@ func handleError(title string, err error) {
 		fmt.Printf("错误消息: %s\n", apiErr.Message)
 
 		// 判断错误类别
-		if apiErr.IsClientError() {
-			fmt.Println("✗ 这是客户端错误 (4xx)")
-			fmt.Println("  建议: 检查请求参数、认证信息或权限")
-			fmt.Println("  是否重试: 否")
-		} else if apiErr.IsServerError() {
-			fmt.Println("✗ 这是服务端错误 (5xx)")
+		if apiErr.IsServerError() {
+			fmt.Println("✗ 这是服务端错误")
 			fmt.Println("  建议: 稍后重试或联系管理员")
 			fmt.Println("  是否重试: 是")
 		} else if apiErr.IsNetworkError() {

@@ -10,7 +10,6 @@ type ErrorType string
 
 const (
 	// HTTP错误
-	ErrorTypeClientError ErrorType = "ClientError" // 4xx 客户端错误
 	ErrorTypeServerError ErrorType = "ServerError" // 5xx 服务端错误
 
 	// 特殊错误类型
@@ -40,11 +39,6 @@ func (e *APIError) Error() string {
 // Unwrap 实现errors.Unwrap接口
 func (e *APIError) Unwrap() error {
 	return e.Err
-}
-
-// IsClientError 判断是否为客户端错误 (4xx)
-func (e *APIError) IsClientError() bool {
-	return e.StatusCode >= 400 && e.StatusCode < 500
 }
 
 // IsServerError 判断是否为服务端错误 (5xx)
@@ -89,10 +83,7 @@ func getErrorTypeFromStatusCode(statusCode int) ErrorType {
 	if statusCode == http.StatusNotModified {
 		return ErrorTypeNotModified
 	}
-	if statusCode >= 400 && statusCode < 500 {
-		return ErrorTypeClientError
-	}
-	if statusCode >= 500 && statusCode < 600 {
+	if statusCode >= 400 && statusCode < 600 {
 		return ErrorTypeServerError
 	}
 	return ErrorTypeUnknown
@@ -116,7 +107,7 @@ func NewNotModifiedError() *APIError {
 }
 
 // NewBusinessLogicError 创建业务逻辑错误
-// 业务逻辑错误通常来自API响应中的Message字段，默认视为客户端错误(400)
+// 业务逻辑错误通常来自API响应中的Message字段，默认视为服务端错误(500)
 func NewBusinessLogicError(message string, url string) *APIError {
-	return NewAPIError(http.StatusBadRequest, ErrorTypeClientError, message, url, nil)
+	return NewAPIError(http.StatusInternalServerError, ErrorTypeServerError, message, url, nil)
 }
