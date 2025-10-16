@@ -282,16 +282,13 @@ func (c *Client) SubmitWithAgent(registerId int, nodeType NodeType, userTraffic 
 	return nil
 }
 
-func (c *Client) SubmitStatsWithAgent(registerId int, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
+func (c *Client) SubmitStatsWithAgent(registerId int, nodeType NodeType, stats *TrafficStats) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitStatsWithAgent", nodeType)
 	url := c.assembleURL(path)
 
 	body := map[string]interface{}{
 		"register_id": registerId,
 		"data":        stats,
-	}
-	if nodeIp != "" {
-		body["node_ip"] = nodeIp
 	}
 
 	res, err := c.client.R().
