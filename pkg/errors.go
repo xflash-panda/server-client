@@ -41,9 +41,9 @@ func (e *APIError) Unwrap() error {
 	return e.Err
 }
 
-// IsServerError 判断是否为服务端错误 (5xx)
+// IsServerError 判断是否为服务端错误 (4xx/5xx)
 func (e *APIError) IsServerError() bool {
-	return e.StatusCode >= 500 && e.StatusCode < 600
+	return e.StatusCode >= 400 && e.StatusCode < 600
 }
 
 // IsNetworkError 判断是否为网络错误

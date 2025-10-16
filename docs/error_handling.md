@@ -224,7 +224,7 @@ func logError(err error) {
 
 `APIError` 的 `Error()` 方法返回格式化的错误信息：
 
-- 包含URL: `[404] ClientError: resource not found (URL: http://api.example.com/users)`
+- 包含URL: `[404] ServerError: resource not found (URL: http://api.example.com/users)`
 - 不包含URL: `[500] ServerError: database connection failed`
 - 网络错误: `[0] NetworkError: connection timeout (URL: http://api.example.com)`
 
@@ -233,9 +233,9 @@ func logError(err error) {
 ### 方式1: 根据状态码自动推断错误类型（推荐）
 
 ```go
-// 自动根据状态码判断是客户端错误还是服务端错误
+// 所有HTTP 4xx/5xx错误都被归类为服务端错误
 err := pkg.NewAPIErrorFromStatusCode(404, "user not found", "http://api.example.com/users/123", nil)
-// 结果: Type = ErrorTypeClientError
+// 结果: Type = ErrorTypeServerError
 
 err := pkg.NewAPIErrorFromStatusCode(500, "database error", "http://api.example.com/data", nil)
 // 结果: Type = ErrorTypeServerError
@@ -259,7 +259,7 @@ err := pkg.NewNotModifiedError()
 ```go
 err := pkg.NewAPIError(
     418,                        // 状态码
-    pkg.ErrorTypeClientError,   // 错误类型
+    pkg.ErrorTypeServerError,   // 错误类型
     "I'm a teapot",            // 消息
     "http://api.example.com",  // URL
     nil,                       // 原始错误
@@ -269,8 +269,7 @@ err := pkg.NewAPIError(
 ## 最佳实践
 
 1. **区分错误类型来决定处理策略**:
-   - **客户端错误 (4xx)**: 通常是请求问题，修复参数后重试才有意义
-   - **服务端错误 (5xx)**: 服务器问题，可以直接重试
+   - **服务端错误 (4xx/5xx)**: 所有HTTP错误都被归类为服务端错误，可以重试
    - **网络错误**: 网络问题，可以重试
    - **解析错误**: 数据格式问题，记录日志并检查API版本
 
@@ -311,8 +310,7 @@ type APIError struct {
         └─ 是
             └─ HTTP状态码
                 ├─ 304 → ErrorTypeNotModified
-                ├─ 4xx → ErrorTypeClientError
-                ├─ 5xx → ErrorTypeServerError
+                ├─ 4xx/5xx → ErrorTypeServerError
                 └─ 其他 → ErrorTypeUnknown
 ```
 
