@@ -71,6 +71,26 @@ func (c *Client) assembleURL(path string) string {
 	return c.config.APIHost + path
 }
 
+// RawConfig get node config by nodeId
+func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
+	var path = fmt.Sprintf("/api/v1/server/%s/config", nodeType)
+	res, err := c.client.R().
+		ForceContentType("application/json").
+		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
+		Get(path)
+
+	if err != nil {
+		return nil, fmt.Errorf("request %s failed: %w", c.assembleURL(path), err)
+	}
+
+	if res.StatusCode() >= 400 {
+		body := res.Body()
+		return nil, fmt.Errorf("request %s failed: %s, %w", c.assembleURL(path), string(body), err)
+	}
+
+	return res.Body(), nil
+}
+
 // Config get node config by nodeId
 func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/config", nodeType)
