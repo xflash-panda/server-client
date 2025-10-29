@@ -200,4 +200,5 @@ type (
 	RespSubmitWithAgent      RespSubmit
 	RespSubmitStatsWithAgent RespSubmit
 	RespUnregister           RespSubmit
+	RespVerify               RespSubmit
 )

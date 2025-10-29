@@ -338,3 +338,30 @@ func (c *Client) Heartbeat(registerId string, nodeType NodeType, nodeIp string) 
 	}
 	return nil
 }
+
+// Verify check if registerId is valid
+func (c *Client) Verify(registerId string, nodeType NodeType) (bool, error) {
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/verify", nodeType)
+	url := c.assembleURL(path)
+
+	body := map[string]interface{}{"register_id": registerId}
+
+	res, err := c.client.R().
+		ForceContentType("application/json").
+		SetBody(body).
+		Post(path)
+	if err != nil {
+		return false, NewNetworkError("request failed", url, err)
+	}
+
+	if res.StatusCode() >= 400 {
+		respBody := res.Body()
+		return false, NewAPIErrorFromStatusCode(res.StatusCode(), string(respBody), url, nil)
+	}
+
+	var respVerify RespVerify
+	if err := json.Unmarshal(res.Body(), &respVerify); err != nil {
+		return false, NewParseError("parse response failed", err)
+	}
+	return respVerify.Data, nil
+}

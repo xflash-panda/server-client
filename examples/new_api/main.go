@@ -31,7 +31,14 @@ func main() {
 	}
 	log.Printf("注册成功，Register ID: %s", registerId)
 
-	// 3. 使用 registerId 进行后续操作
+	// 3. 验证 registerId 是否有效
+	valid, err := client.Verify(registerId, pkg.Hysteria2)
+	if err != nil {
+		log.Fatalf("验证失败: %v", err)
+	}
+	log.Printf("Register ID 验证结果: %v", valid)
+
+	// 4. 使用 registerId 进行后续操作
 	users, err := client.Users(registerId, pkg.Hysteria2)
 	if err != nil {
 		log.Fatalf("获取用户列表失败: %v", err)

@@ -126,3 +126,12 @@ func TestHeartbeat(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestVerify(t *testing.T) {
+	client := CreateClient()
+	valid, err := client.Verify("1", Trojan)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("Verify result: %v", valid)
+}
