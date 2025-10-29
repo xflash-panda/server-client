@@ -29,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("注册失败: %v", err)
 	}
-	log.Printf("注册成功，Register ID: %d", registerId)
+	log.Printf("注册成功，Register ID: %s", registerId)
 
 	// 3. 使用 registerId 进行后续操作
 	users, err := client.Users(registerId, pkg.Hysteria2)
