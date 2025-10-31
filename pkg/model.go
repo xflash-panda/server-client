@@ -190,7 +190,7 @@ type RespSubmit struct {
 
 type RespRegister struct {
 	Data struct {
-		RegisterId int `json:"register_id"`
+		RegisterId string `json:"register_id"`
 	} `json:"data"`
 	Message string `json:"message"`
 }
@@ -200,4 +200,5 @@ type (
 	RespSubmitWithAgent      RespSubmit
 	RespSubmitStatsWithAgent RespSubmit
 	RespUnregister           RespSubmit
+	RespVerify               RespSubmit
 )

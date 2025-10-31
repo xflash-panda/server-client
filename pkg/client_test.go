@@ -30,12 +30,12 @@ func TestRegister(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("RegisterId: %d", registerId)
+	t.Logf("RegisterId: %s", registerId)
 }
 
 func TestUsers(t *testing.T) {
 	client := CreateClient()
-	userList, err := client.Users(1, Trojan)
+	userList, err := client.Users("1", Trojan)
 	t.Log(len(*userList))
 
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
@@ -45,14 +45,14 @@ func TestUsers(t *testing.T) {
 
 func TestUsers2(t *testing.T) {
 	client := CreateClient()
-	userList, err := client.Users(1, Trojan)
+	userList, err := client.Users("1", Trojan)
 	t.Log(len(*userList))
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	userList, err = client.Users(1, Trojan)
+	userList, err = client.Users("1", Trojan)
 	t.Log(len(*userList))
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
@@ -61,7 +61,7 @@ func TestUsers2(t *testing.T) {
 
 func TestSubmit(t *testing.T) {
 	client := CreateClient()
-	users, err := client.Users(1, Trojan)
+	users, err := client.Users("1", Trojan)
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestSubmit(t *testing.T) {
 		}
 	}
 	// client.Debug()
-	err = client.Submit(1, Trojan, generalUserTraffic)
+	err = client.Submit("1", Trojan, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
@@ -83,7 +83,7 @@ func TestSubmit(t *testing.T) {
 
 func TestSubmitWithAgent(t *testing.T) {
 	client := CreateClient()
-	users, err := client.Users(1, Trojan)
+	users, err := client.Users("1", Trojan)
 	if err != nil {
 		t.Error(err)
 	}
@@ -96,7 +96,7 @@ func TestSubmitWithAgent(t *testing.T) {
 			Count:    22,
 		}
 	}
-	err = client.SubmitWithAgent(1, Trojan, generalUserTraffic)
+	err = client.SubmitWithAgent("1", Trojan, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
@@ -113,7 +113,7 @@ func TestSubmitStatsWithAgent(t *testing.T) {
 		},
 	}
 
-	err := client.SubmitStatsWithAgent(1, Trojan, "127.0.0.1", stats)
+	err := client.SubmitStatsWithAgent("1", Trojan, "127.0.0.1", stats)
 	if err != nil {
 		t.Error(err)
 	}
@@ -121,7 +121,7 @@ func TestSubmitStatsWithAgent(t *testing.T) {
 
 func TestHeartbeat(t *testing.T) {
 	client := CreateClient()
-	err := client.Heartbeat(1, Trojan, "127.0.0.1")
+	err := client.Heartbeat("1", Trojan, "127.0.0.1")
 	if err != nil {
 		t.Error(err)
 	}

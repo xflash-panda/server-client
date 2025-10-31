@@ -73,12 +73,11 @@ func (c *Client) assembleURL(path string) string {
 
 // RawConfig get node config by nodeId
 func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
-	var path = fmt.Sprintf("/api/v1/server/%s/config", nodeType)
+	path := fmt.Sprintf("/api/v1/server/%s/config", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		Get(path)
-
 	if err != nil {
 		return nil, fmt.Errorf("request %s failed: %w", c.assembleURL(path), err)
 	}
@@ -126,7 +125,7 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 }
 
 // Register register node and return register_id
-func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId int, err error) {
+func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId string, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/register", nodeType)
 	url := c.assembleURL(path)
 
@@ -141,29 +140,29 @@ func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, por
 		SetBody(body).
 		Post(path)
 	if err != nil {
-		return 0, NewNetworkError("request failed", url, err)
+		return "", NewNetworkError("request failed", url, err)
 	}
 
 	if res.StatusCode() >= 400 {
 		body := res.Body()
-		return 0, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+		return "", NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
 	}
 
 	var resp RespRegister
 	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		return 0, NewParseError("parse response failed", err)
+		return "", NewParseError("parse response failed", err)
 	}
 
 	return resp.Data.RegisterId, nil
 }
 
-func (c *Client) Unregister(nodeType NodeType, registerId int) error {
+func (c *Client) Unregister(nodeType NodeType, registerId string) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/unregister", nodeType)
 	url := c.assembleURL(path)
 
 	res, err := c.client.R().
 		ForceContentType("application/json").
-		SetQueryParam("register_id", strconv.Itoa(registerId)).
+		SetQueryParam("register_id", registerId).
 		Post(path)
 	if err != nil {
 		return NewNetworkError("request failed", url, err)
@@ -182,15 +181,15 @@ func (c *Client) Unregister(nodeType NodeType, registerId int) error {
 	return nil
 }
 
-func (c *Client) RawUsers(registerId int, nodeType NodeType) (rawData []byte, err error) {
+func (c *Client) RawUsers(registerId string, nodeType NodeType) (rawData []byte, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
-	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, registerId)
+	eTagKey := fmt.Sprintf("users_%s_%s", nodeType, registerId)
 	var eTagValue string
 	if value, ok := c.eTags.Load(eTagKey); ok {
 		eTagValue = value.(string)
 	}
-	res, err := c.client.R().SetQueryParam("register_id", strconv.Itoa(registerId)).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
+	res, err := c.client.R().SetQueryParam("register_id", registerId).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
 	if err != nil {
 		return nil, NewNetworkError("request failed", url, err)
 	}
@@ -210,7 +209,7 @@ func (c *Client) RawUsers(registerId int, nodeType NodeType) (rawData []byte, er
 }
 
 // Users will pull users form server
-func (c *Client) Users(registerId int, nodeType NodeType) (UserList *[]User, err error) {
+func (c *Client) Users(registerId string, nodeType NodeType) (UserList *[]User, err error) {
 	rawData, err := c.RawUsers(registerId, nodeType)
 	if err != nil {
 		return nil, err
@@ -224,7 +223,7 @@ func (c *Client) Users(registerId int, nodeType NodeType) (UserList *[]User, err
 }
 
 // Submit reports the user traffic
-func (c *Client) Submit(registerId int, nodeType NodeType, userTraffic []*UserTraffic) error {
+func (c *Client) Submit(registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submit", nodeType)
 	url := c.assembleURL(path)
 
@@ -253,7 +252,7 @@ func (c *Client) Submit(registerId int, nodeType NodeType, userTraffic []*UserTr
 	return nil
 }
 
-func (c *Client) SubmitWithAgent(registerId int, nodeType NodeType, userTraffic []*UserTraffic) error {
+func (c *Client) SubmitWithAgent(registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitWithAgent", nodeType)
 	url := c.assembleURL(path)
 
@@ -282,7 +281,7 @@ func (c *Client) SubmitWithAgent(registerId int, nodeType NodeType, userTraffic 
 	return nil
 }
 
-func (c *Client) SubmitStatsWithAgent(registerId int, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
+func (c *Client) SubmitStatsWithAgent(registerId string, nodeType NodeType, nodeIp string, stats *TrafficStats) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitStatsWithAgent", nodeType)
 	url := c.assembleURL(path)
 
@@ -314,7 +313,7 @@ func (c *Client) SubmitStatsWithAgent(registerId int, nodeType NodeType, nodeIp 
 	return nil
 }
 
-func (c *Client) Heartbeat(registerId int, nodeType NodeType, nodeIp string) error {
+func (c *Client) Heartbeat(registerId string, nodeType NodeType, nodeIp string) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/heartbeat", nodeType)
 	url := c.assembleURL(path)
 
@@ -341,4 +340,31 @@ func (c *Client) Heartbeat(registerId int, nodeType NodeType, nodeIp string) err
 		return NewParseError("parse response failed", err)
 	}
 	return nil
+}
+
+// Verify check if registerId is valid
+func (c *Client) Verify(registerId string, nodeType NodeType) (bool, error) {
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/verify", nodeType)
+	url := c.assembleURL(path)
+
+	body := map[string]interface{}{"register_id": registerId}
+
+	res, err := c.client.R().
+		ForceContentType("application/json").
+		SetBody(body).
+		Post(path)
+	if err != nil {
+		return false, NewNetworkError("request failed", url, err)
+	}
+
+	if res.StatusCode() >= 400 {
+		respBody := res.Body()
+		return false, NewAPIErrorFromStatusCode(res.StatusCode(), string(respBody), url, nil)
+	}
+
+	var respVerify RespVerify
+	if err := json.Unmarshal(res.Body(), &respVerify); err != nil {
+		return false, NewParseError("parse response failed", err)
+	}
+	return respVerify.Data, nil
 }
