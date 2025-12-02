@@ -54,6 +54,14 @@ func AsAnyTLSConfig(nc NodeConfig) (*AnyTLSConfig, error) {
 	return config, nil
 }
 
+func AsTuicConfig(nc NodeConfig) (*TuicConfig, error) {
+	config, err := AsConfig[*TuicConfig](nc)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
 func AsConfig[T NodeConfig](nc NodeConfig) (T, error) {
 	// 创建类型 T 的零值
 	var zero T
@@ -112,6 +120,10 @@ func UnmarshalVMessConfig(data []byte) (*VMessConfig, error) {
 
 func UnmarshalAnyTLSConfig(data []byte) (*AnyTLSConfig, error) {
 	return UnmarshalConfig[AnyTLSConfig](data)
+}
+
+func UnmarshalTuicConfig(data []byte) (*TuicConfig, error) {
+	return UnmarshalConfig[TuicConfig](data)
 }
 
 func UnmarshalUsers(data []byte) (*[]User, error) {

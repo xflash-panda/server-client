@@ -16,6 +16,7 @@ const (
 	Hysteria2   NodeType = "hysteria2"
 	VMess       NodeType = "vmess"
 	AnyTLS      NodeType = "anytls"
+	Tuic        NodeType = "tuic"
 )
 
 // ErrorUserNotModified 用户数据未修改错误 (304)
@@ -39,6 +40,7 @@ var configFactories = map[NodeType]configFactoryFunc{
 	ShadowSocks: func() NodeConfig { return &ShadowsocksConfig{} },
 	VMess:       func() NodeConfig { return &VMessConfig{} },
 	AnyTLS:      func() NodeConfig { return &AnyTLSConfig{} },
+	Tuic:        func() NodeConfig { return &TuicConfig{} },
 }
 
 type NodeConfig interface {
@@ -159,6 +161,21 @@ func (n *AnyTLSConfig) String() string {
 
 func (n *AnyTLSConfig) TypeName() string {
 	return string(AnyTLS)
+}
+
+type TuicConfig struct {
+	ID            int    `json:"id"`
+	ServerPort    int    `json:"server_port"`
+	AllowInsecure int    `json:"allow_insecure"`
+	ServerName    string `json:"server_name"`
+}
+
+func (n *TuicConfig) String() string {
+	return fmt.Sprintf("TuicConfig: %#v", n)
+}
+
+func (n *TuicConfig) TypeName() string {
+	return string(Tuic)
 }
 
 type User struct {
