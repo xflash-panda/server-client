@@ -13,7 +13,7 @@ func main() {
 }
 
 func demonstrateErrors() {
-	fmt.Println("=== 错误处理示例 ===\n")
+	fmt.Println("=== 错误处理示例 ===")
 
 	// 示例1: 服务端错误 (401)
 	err1 := pkg.NewAPIErrorFromStatusCode(401, "invalid token", "http://api.example.com/users", nil)

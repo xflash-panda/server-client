@@ -36,26 +36,31 @@ func TestRegister(t *testing.T) {
 func TestUsers(t *testing.T) {
 	client := CreateClient()
 	userList, err := client.Users("1", Trojan)
-	t.Log(len(*userList))
-
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
+	}
+	if userList != nil {
+		t.Log(len(*userList))
 	}
 }
 
 func TestUsers2(t *testing.T) {
 	client := CreateClient()
 	userList, err := client.Users("1", Trojan)
-	t.Log(len(*userList))
-
 	if err != nil {
 		t.Error(err)
+		return
+	}
+	if userList != nil {
+		t.Log(len(*userList))
 	}
 
 	userList, err = client.Users("1", Trojan)
-	t.Log(len(*userList))
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
+	}
+	if userList != nil {
+		t.Log(len(*userList))
 	}
 }
 
