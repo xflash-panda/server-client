@@ -164,10 +164,11 @@ func (n *AnyTLSConfig) TypeName() string {
 }
 
 type TuicConfig struct {
-	ID            int    `json:"id"`
-	ServerPort    int    `json:"server_port"`
-	AllowInsecure int    `json:"allow_insecure"`
-	ServerName    string `json:"server_name"`
+	ID               int    `json:"id"`
+	ServerPort       int    `json:"server_port"`
+	AllowInsecure    int    `json:"allow_insecure"`
+	ServerName       string `json:"server_name"`
+	ZeroRttHandshake bool   `json:"zero_rtt_handshake"`
 }
 
 func (n *TuicConfig) String() string {
