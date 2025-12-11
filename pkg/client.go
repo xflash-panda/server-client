@@ -73,7 +73,7 @@ func (c *Client) assembleURL(path string) string {
 
 // RawConfig get node config by nodeId
 func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
-	path := fmt.Sprintf("/api/v1/server/%s/config", nodeType)
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/config", nodeType)
 	res, err := c.client.R().
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
