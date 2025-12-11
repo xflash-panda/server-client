@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"errors"
+	"os"
 	"testing"
 )
 
@@ -15,7 +16,14 @@ func CreateClient() *Client {
 	return client
 }
 
+func skipIfNoServer(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.Skip("Skipping integration test; set INTEGRATION_TEST=1 to run")
+	}
+}
+
 func TestConfig(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	config, err := client.Config(1, Trojan)
 	if err != nil {
@@ -25,6 +33,7 @@ func TestConfig(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	registerId, err := client.Register(32, Trojan, "test-hostname", 8080, "127.0.0.1")
 	if err != nil {
@@ -34,6 +43,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestUsers(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	userList, err := client.Users("1", Trojan)
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
@@ -45,6 +55,7 @@ func TestUsers(t *testing.T) {
 }
 
 func TestUsers2(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	userList, err := client.Users("1", Trojan)
 	if err != nil {
@@ -65,10 +76,12 @@ func TestUsers2(t *testing.T) {
 }
 
 func TestSubmit(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	users, err := client.Users("1", Trojan)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	generalUserTraffic := make([]*UserTraffic, len(*users))
 	for i, userInfo := range *users {
@@ -79,7 +92,6 @@ func TestSubmit(t *testing.T) {
 			Count:    33,
 		}
 	}
-	// client.Debug()
 	err = client.Submit("1", Trojan, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
@@ -87,10 +99,12 @@ func TestSubmit(t *testing.T) {
 }
 
 func TestSubmitWithAgent(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	users, err := client.Users("1", Trojan)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	generalUserTraffic := make([]*UserTraffic, len(*users))
 	for i, userInfo := range *users {
@@ -108,6 +122,7 @@ func TestSubmitWithAgent(t *testing.T) {
 }
 
 func TestSubmitStatsWithAgent(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	stats := &TrafficStats{
 		Count:    1,
@@ -125,6 +140,7 @@ func TestSubmitStatsWithAgent(t *testing.T) {
 }
 
 func TestHeartbeat(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	err := client.Heartbeat("1", Trojan, "127.0.0.1")
 	if err != nil {
@@ -133,6 +149,7 @@ func TestHeartbeat(t *testing.T) {
 }
 
 func TestVerify(t *testing.T) {
+	skipIfNoServer(t)
 	client := CreateClient()
 	valid, err := client.Verify("1", Trojan)
 	if err != nil {
