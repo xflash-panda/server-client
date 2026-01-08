@@ -222,6 +222,52 @@ func (c *Client) Users(registerId string, nodeType NodeType) (UserList *[]User, 
 	return resp.Data, nil
 }
 
+// RawUsersByNodeId get raw users data by nodeId and nodeType
+func (c *Client) RawUsersByNodeId(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
+	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
+	url := c.assembleURL(path)
+	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, nodeId)
+	var eTagValue string
+	if value, ok := c.eTags.Load(eTagKey); ok {
+		eTagValue = value.(string)
+	}
+	res, err := c.client.R().
+		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
+		SetHeader("If-None-Match", eTagValue).
+		ForceContentType("application/json").
+		Get(path)
+	if err != nil {
+		return nil, NewNetworkError("request failed", url, err)
+	}
+
+	if res.StatusCode() == 304 {
+		return nil, ErrorUserNotModified
+	}
+
+	if res.StatusCode() >= 400 {
+		body := res.Body()
+		return nil, NewAPIErrorFromStatusCode(res.StatusCode(), string(body), url, nil)
+	}
+	// update etag
+	hash := res.Header().Get("Etag")
+	c.eTags.Store(eTagKey, hash)
+	return res.Body(), nil
+}
+
+// UsersByNodeId will pull users by nodeId and nodeType
+func (c *Client) UsersByNodeId(nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
+	rawData, err := c.RawUsersByNodeId(nodeId, nodeType)
+	if err != nil {
+		return nil, err
+	}
+	var resp RespUsers
+	if err := json.Unmarshal(rawData, &resp); err != nil {
+		return nil, NewParseError("parse response failed", err)
+	}
+
+	return resp.Data, nil
+}
+
 // Submit reports the user traffic
 func (c *Client) Submit(registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submit", nodeType)
