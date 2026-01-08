@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	resty "github.com/go-resty/resty/v2"
@@ -22,9 +23,10 @@ type Config struct {
 
 // Client APIClient create a api client to the panel.
 type Client struct {
-	client *resty.Client
-	config *Config
-	eTags  sync.Map
+	client   *resty.Client
+	config   *Config
+	eTags    sync.Map
+	batchSeq atomic.Uint64
 }
 
 // New creat a api instance
@@ -302,8 +304,13 @@ func (c *Client) SubmitWithAgent(registerId string, nodeType NodeType, userTraff
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitWithAgent", nodeType)
 	url := c.assembleURL(path)
 
+	// generate batch_id: {register_id}_{timestamp}_{seq}
+	seq := c.batchSeq.Add(1)
+	batchId := fmt.Sprintf("%s_%d_%d", registerId, time.Now().Unix(), seq)
+
 	body := map[string]interface{}{
 		"register_id": registerId,
+		"batch_id":    batchId,
 		"data":        userTraffic,
 	}
 
