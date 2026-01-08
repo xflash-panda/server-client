@@ -9,10 +9,11 @@ import (
 type ErrorType string
 
 const (
-	// HTTP错误
-	ErrorTypeServerError ErrorType = "ServerError" // 5xx 服务端错误
+	// HTTP错误大类
+	ErrorTypeClientError ErrorType = "ClientError" // 4xx 客户端错误（请求参数、认证等问题，调用方需修正）
+	ErrorTypeServerError ErrorType = "ServerError" // 5xx 服务端错误（服务端问题，调用方可重试）
 
-	// 特殊错误类型
+	// 本地错误
 	ErrorTypeNetworkError ErrorType = "NetworkError" // 网络连接错误
 	ErrorTypeParseError   ErrorType = "ParseError"   // 响应解析错误
 	ErrorTypeNotModified  ErrorType = "NotModified"  // 304 Not Modified
@@ -41,9 +42,16 @@ func (e *APIError) Unwrap() error {
 	return e.Err
 }
 
-// IsServerError 判断是否为服务端错误 (4xx/5xx)
+// IsClientError 判断是否为客户端错误 (4xx)
+// 客户端错误表示请求有问题，调用方需要修正请求参数、认证信息等
+func (e *APIError) IsClientError() bool {
+	return e.Type == ErrorTypeClientError || (e.StatusCode >= 400 && e.StatusCode < 500)
+}
+
+// IsServerError 判断是否为服务端错误 (5xx)
+// 服务端错误表示服务端出现问题，调用方可以稍后重试
 func (e *APIError) IsServerError() bool {
-	return e.StatusCode >= 400 && e.StatusCode < 600
+	return e.Type == ErrorTypeServerError || (e.StatusCode >= 500 && e.StatusCode < 600)
 }
 
 // IsNetworkError 判断是否为网络错误
@@ -83,7 +91,10 @@ func getErrorTypeFromStatusCode(statusCode int) ErrorType {
 	if statusCode == http.StatusNotModified {
 		return ErrorTypeNotModified
 	}
-	if statusCode >= 400 && statusCode < 600 {
+	if statusCode >= 400 && statusCode < 500 {
+		return ErrorTypeClientError
+	}
+	if statusCode >= 500 && statusCode < 600 {
 		return ErrorTypeServerError
 	}
 	return ErrorTypeUnknown

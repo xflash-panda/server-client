@@ -14,14 +14,14 @@ func TestAPIError_Error(t *testing.T) {
 		want     string
 	}{
 		{
-			name: "服务端错误 - 401",
+			name: "客户端错误 - 401",
 			apiError: &APIError{
 				StatusCode: 401,
-				Type:       ErrorTypeServerError,
+				Type:       ErrorTypeClientError,
 				Message:    "invalid token",
 				URL:        "http://example.com/api/users",
 			},
-			want: "[401] ServerError: invalid token (URL: http://example.com/api/users)",
+			want: "[401] ClientError: invalid token (URL: http://example.com/api/users)",
 		},
 		{
 			name: "服务端错误 - 500 Internal Server",
@@ -37,11 +37,11 @@ func TestAPIError_Error(t *testing.T) {
 			name: "无URL的错误",
 			apiError: &APIError{
 				StatusCode: 404,
-				Type:       ErrorTypeServerError,
+				Type:       ErrorTypeClientError,
 				Message:    "resource not found",
 				URL:        "",
 			},
-			want: "[404] ServerError: resource not found",
+			want: "[404] ClientError: resource not found",
 		},
 		{
 			name: "网络错误",
@@ -64,6 +64,31 @@ func TestAPIError_Error(t *testing.T) {
 	}
 }
 
+func TestAPIError_IsClientError(t *testing.T) {
+	tests := []struct {
+		name       string
+		statusCode int
+		want       bool
+	}{
+		{"400 Bad Request", 400, true},
+		{"401 Unauthorized", 401, true},
+		{"403 Forbidden", 403, true},
+		{"404 Not Found", 404, true},
+		{"499 Custom Client Error", 499, true},
+		{"500 Internal Server", 500, false},
+		{"200 OK", 200, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := NewAPIErrorFromStatusCode(tt.statusCode, "test error", "", nil)
+			if got := err.IsClientError(); got != tt.want {
+				t.Errorf("APIError.IsClientError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAPIError_IsServerError(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -74,8 +99,8 @@ func TestAPIError_IsServerError(t *testing.T) {
 		{"501 Not Implemented", 501, true},
 		{"503 Service Unavailable", 503, true},
 		{"599 Custom Server Error", 599, true},
-		{"400 Bad Request", 400, true},
-		{"404 Not Found", 404, true},
+		{"400 Bad Request", 400, false},
+		{"404 Not Found", 404, false},
 		{"200 OK", 200, false},
 	}
 
@@ -94,11 +119,11 @@ func TestGetErrorTypeFromStatusCode(t *testing.T) {
 		statusCode int
 		want       ErrorType
 	}{
-		{400, ErrorTypeServerError},
-		{401, ErrorTypeServerError},
-		{403, ErrorTypeServerError},
-		{404, ErrorTypeServerError},
-		{499, ErrorTypeServerError},
+		{400, ErrorTypeClientError},
+		{401, ErrorTypeClientError},
+		{403, ErrorTypeClientError},
+		{404, ErrorTypeClientError},
+		{499, ErrorTypeClientError},
 		{500, ErrorTypeServerError},
 		{501, ErrorTypeServerError},
 		{503, ErrorTypeServerError},
@@ -141,11 +166,18 @@ func TestNewAPIErrorFromStatusCode(t *testing.T) {
 		wantType   ErrorType
 	}{
 		{
+			name:       "400 Bad Request",
+			statusCode: 400,
+			message:    "invalid parameter",
+			url:        "http://example.com/api/users/123",
+			wantType:   ErrorTypeClientError,
+		},
+		{
 			name:       "404 Not Found",
 			statusCode: 404,
 			message:    "resource not found",
 			url:        "http://example.com/api/users/123",
-			wantType:   ErrorTypeServerError,
+			wantType:   ErrorTypeClientError,
 		},
 		{
 			name:       "500 Internal Server Error",
