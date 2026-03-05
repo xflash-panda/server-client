@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,10 +74,11 @@ func (c *Client) assembleURL(path string) string {
 	return c.config.APIHost + path
 }
 
-// RawConfig get node config by nodeId
-func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
+// RawConfig get node config raw data by nodeId
+func (c *Client) RawConfig(ctx context.Context, nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/config", nodeType)
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		Get(path)
@@ -93,11 +95,12 @@ func (c *Client) RawConfig(nodeId NodeId, nodeType NodeType) (rawData []byte, er
 }
 
 // Config get node config by nodeId
-func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
+func (c *Client) Config(ctx context.Context, nodeId NodeId, nodeType NodeType) (config NodeConfig, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/config", nodeType)
 	url := c.assembleURL(path)
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		Get(path)
@@ -127,16 +130,17 @@ func (c *Client) Config(nodeId NodeId, nodeType NodeType) (config NodeConfig, er
 }
 
 // Register register node and return register_id
-func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId string, err error) {
+func (c *Client) Register(ctx context.Context, nodeId NodeId, nodeType NodeType, hostname string, port int, nodeIp string) (registerId string, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/register", nodeType)
 	url := c.assembleURL(path)
 
-	body := map[string]interface{}{"hostname": hostname, "port": port}
+	body := map[string]any{"hostname": hostname, "port": port}
 	if nodeIp != "" {
 		body["node_ip"] = nodeIp
 	}
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		SetBody(body).
@@ -158,11 +162,13 @@ func (c *Client) Register(nodeId NodeId, nodeType NodeType, hostname string, por
 	return resp.Data.RegisterId, nil
 }
 
-func (c *Client) Unregister(nodeType NodeType, registerId string) error {
+// Unregister unregister node
+func (c *Client) Unregister(ctx context.Context, nodeType NodeType, registerId string) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/unregister", nodeType)
 	url := c.assembleURL(path)
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetQueryParam("register_id", registerId).
 		Post(path)
@@ -183,7 +189,8 @@ func (c *Client) Unregister(nodeType NodeType, registerId string) error {
 	return nil
 }
 
-func (c *Client) RawUsers(registerId string, nodeType NodeType) (rawData []byte, err error) {
+// RawUsers get raw users data
+func (c *Client) RawUsers(ctx context.Context, registerId string, nodeType NodeType) (rawData []byte, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
 	eTagKey := fmt.Sprintf("users_%s_%s", nodeType, registerId)
@@ -191,7 +198,12 @@ func (c *Client) RawUsers(registerId string, nodeType NodeType) (rawData []byte,
 	if value, ok := c.eTags.Load(eTagKey); ok {
 		eTagValue = value.(string)
 	}
-	res, err := c.client.R().SetQueryParam("register_id", registerId).SetHeader("If-None-Match", eTagValue).ForceContentType("application/json").Get(path)
+	res, err := c.client.R().
+		SetContext(ctx).
+		SetQueryParam("register_id", registerId).
+		SetHeader("If-None-Match", eTagValue).
+		ForceContentType("application/json").
+		Get(path)
 	if err != nil {
 		return nil, NewNetworkError("request failed", url, err)
 	}
@@ -210,9 +222,9 @@ func (c *Client) RawUsers(registerId string, nodeType NodeType) (rawData []byte,
 	return res.Body(), nil
 }
 
-// Users will pull users form server
-func (c *Client) Users(registerId string, nodeType NodeType) (UserList *[]User, err error) {
-	rawData, err := c.RawUsers(registerId, nodeType)
+// Users will pull users from server
+func (c *Client) Users(ctx context.Context, registerId string, nodeType NodeType) (UserList *[]User, err error) {
+	rawData, err := c.RawUsers(ctx, registerId, nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +237,7 @@ func (c *Client) Users(registerId string, nodeType NodeType) (UserList *[]User, 
 }
 
 // RawUsersByNodeId get raw users data by nodeId and nodeType
-func (c *Client) RawUsersByNodeId(nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
+func (c *Client) RawUsersByNodeId(ctx context.Context, nodeId NodeId, nodeType NodeType) (rawData []byte, err error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/users", nodeType)
 	url := c.assembleURL(path)
 	eTagKey := fmt.Sprintf("users_%s_%d", nodeType, nodeId)
@@ -234,6 +246,7 @@ func (c *Client) RawUsersByNodeId(nodeId NodeId, nodeType NodeType) (rawData []b
 		eTagValue = value.(string)
 	}
 	res, err := c.client.R().
+		SetContext(ctx).
 		SetQueryParam("node_id", strconv.Itoa(int(nodeId))).
 		SetHeader("If-None-Match", eTagValue).
 		ForceContentType("application/json").
@@ -257,8 +270,8 @@ func (c *Client) RawUsersByNodeId(nodeId NodeId, nodeType NodeType) (rawData []b
 }
 
 // UsersByNodeId will pull users by nodeId and nodeType
-func (c *Client) UsersByNodeId(nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
-	rawData, err := c.RawUsersByNodeId(nodeId, nodeType)
+func (c *Client) UsersByNodeId(ctx context.Context, nodeId NodeId, nodeType NodeType) (UserList *[]User, err error) {
+	rawData, err := c.RawUsersByNodeId(ctx, nodeId, nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -271,16 +284,17 @@ func (c *Client) UsersByNodeId(nodeId NodeId, nodeType NodeType) (UserList *[]Us
 }
 
 // Submit reports the user traffic
-func (c *Client) Submit(registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
+func (c *Client) Submit(ctx context.Context, registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submit", nodeType)
 	url := c.assembleURL(path)
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"register_id": registerId,
 		"data":        userTraffic,
 	}
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetBody(body).
 		Post(path)
@@ -300,7 +314,8 @@ func (c *Client) Submit(registerId string, nodeType NodeType, userTraffic []*Use
 	return nil
 }
 
-func (c *Client) SubmitWithAgent(registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
+// SubmitWithAgent reports user traffic with agent
+func (c *Client) SubmitWithAgent(ctx context.Context, registerId string, nodeType NodeType, userTraffic []*UserTraffic) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitWithAgent", nodeType)
 	url := c.assembleURL(path)
 
@@ -308,13 +323,14 @@ func (c *Client) SubmitWithAgent(registerId string, nodeType NodeType, userTraff
 	seq := c.batchSeq.Add(1)
 	batchId := fmt.Sprintf("%s_%d_%d", registerId, time.Now().Unix(), seq)
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"register_id": registerId,
 		"batch_id":    batchId,
 		"data":        userTraffic,
 	}
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetBody(body).
 		Post(path)
@@ -334,16 +350,18 @@ func (c *Client) SubmitWithAgent(registerId string, nodeType NodeType, userTraff
 	return nil
 }
 
-func (c *Client) SubmitStatsWithAgent(registerId string, nodeType NodeType, stats *TrafficStats) error {
+// SubmitStatsWithAgent reports traffic stats with agent
+func (c *Client) SubmitStatsWithAgent(ctx context.Context, registerId string, nodeType NodeType, stats *TrafficStats) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/submitStatsWithAgent", nodeType)
 	url := c.assembleURL(path)
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"register_id": registerId,
 		"data":        stats,
 	}
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetBody(body).
 		Post(path)
@@ -363,16 +381,18 @@ func (c *Client) SubmitStatsWithAgent(registerId string, nodeType NodeType, stat
 	return nil
 }
 
-func (c *Client) Heartbeat(registerId string, nodeType NodeType, nodeIp string) error {
+// Heartbeat send heartbeat
+func (c *Client) Heartbeat(ctx context.Context, registerId string, nodeType NodeType, nodeIp string) error {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/heartbeat", nodeType)
 	url := c.assembleURL(path)
 
-	body := map[string]interface{}{"register_id": registerId}
+	body := map[string]any{"register_id": registerId}
 	if nodeIp != "" {
 		body["node_ip"] = nodeIp
 	}
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetBody(body).
 		Post(path)
@@ -393,13 +413,14 @@ func (c *Client) Heartbeat(registerId string, nodeType NodeType, nodeIp string) 
 }
 
 // Verify check if registerId is valid
-func (c *Client) Verify(registerId string, nodeType NodeType) (bool, error) {
+func (c *Client) Verify(ctx context.Context, registerId string, nodeType NodeType) (bool, error) {
 	path := fmt.Sprintf("/api/v1/server/enhanced/%s/verify", nodeType)
 	url := c.assembleURL(path)
 
-	body := map[string]interface{}{"register_id": registerId}
+	body := map[string]any{"register_id": registerId}
 
 	res, err := c.client.R().
+		SetContext(ctx).
 		ForceContentType("application/json").
 		SetBody(body).
 		Post(path)

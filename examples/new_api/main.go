@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -16,30 +17,31 @@ func main() {
 		Debug:   true,
 	}
 	client := pkg.New(apiConfig)
+	ctx := context.Background()
 
-	// 1. 获取节点配置 (新接口 - 只需要 nodeID)
-	config, err := client.Config(1, pkg.Hysteria2)
+	// 1. 获取节点配置
+	config, err := client.Config(ctx, 1, pkg.Hysteria2)
 	if err != nil {
 		log.Fatalf("获取配置失败: %v", err)
 	}
 	log.Printf("节点配置: %v", config)
 
-	// 2. 注册节点 (修改后的接口 - 只返回 register_id)
-	registerId, err := client.Register(1, pkg.Hysteria2, "test-hostname", 8080, "127.0.0.1")
+	// 2. 注册节点
+	registerId, err := client.Register(ctx, 1, pkg.Hysteria2, "test-hostname", 8080, "127.0.0.1")
 	if err != nil {
 		log.Fatalf("注册失败: %v", err)
 	}
 	log.Printf("注册成功，Register ID: %s", registerId)
 
 	// 3. 验证 registerId 是否有效
-	valid, err := client.Verify(registerId, pkg.Hysteria2)
+	valid, err := client.Verify(ctx, registerId, pkg.Hysteria2)
 	if err != nil {
 		log.Fatalf("验证失败: %v", err)
 	}
 	log.Printf("Register ID 验证结果: %v", valid)
 
 	// 4. 使用 registerId 进行后续操作
-	users, err := client.Users(registerId, pkg.Hysteria2)
+	users, err := client.Users(ctx, registerId, pkg.Hysteria2)
 	if err != nil {
 		log.Fatalf("获取用户列表失败: %v", err)
 	}

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -22,30 +23,33 @@ func skipIfNoServer(t *testing.T) {
 	}
 }
 
-func TestConfig(t *testing.T) {
+func TestIntegrationConfig(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	config, err := client.Config(1, Trojan)
+	ctx := context.Background()
+	config, err := client.Config(ctx, 1, Trojan)
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("Config: %v", config)
 }
 
-func TestRegister(t *testing.T) {
+func TestIntegrationRegister(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	registerId, err := client.Register(32, Trojan, "test-hostname", 8080, "127.0.0.1")
+	ctx := context.Background()
+	registerId, err := client.Register(ctx, 32, Trojan, "test-hostname", 8080, "127.0.0.1")
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("RegisterId: %s", registerId)
 }
 
-func TestUsers(t *testing.T) {
+func TestIntegrationUsers(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	userList, err := client.Users("1", Trojan)
+	ctx := context.Background()
+	userList, err := client.Users(ctx, "1", Trojan)
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
 	}
@@ -54,10 +58,11 @@ func TestUsers(t *testing.T) {
 	}
 }
 
-func TestUsers2(t *testing.T) {
+func TestIntegrationUsers2(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	userList, err := client.Users("1", Trojan)
+	ctx := context.Background()
+	userList, err := client.Users(ctx, "1", Trojan)
 	if err != nil {
 		t.Error(err)
 		return
@@ -66,7 +71,7 @@ func TestUsers2(t *testing.T) {
 		t.Log(len(*userList))
 	}
 
-	userList, err = client.Users("1", Trojan)
+	userList, err = client.Users(ctx, "1", Trojan)
 	if err != nil && !errors.Is(err, ErrorUserNotModified) {
 		t.Error(err)
 	}
@@ -75,10 +80,11 @@ func TestUsers2(t *testing.T) {
 	}
 }
 
-func TestSubmit(t *testing.T) {
+func TestIntegrationSubmit(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	users, err := client.Users("1", Trojan)
+	ctx := context.Background()
+	users, err := client.Users(ctx, "1", Trojan)
 	if err != nil {
 		t.Error(err)
 		return
@@ -92,16 +98,17 @@ func TestSubmit(t *testing.T) {
 			Count:    33,
 		}
 	}
-	err = client.Submit("1", Trojan, generalUserTraffic)
+	err = client.Submit(ctx, "1", Trojan, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func TestSubmitWithAgent(t *testing.T) {
+func TestIntegrationSubmitWithAgent(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	users, err := client.Users("1", Trojan)
+	ctx := context.Background()
+	users, err := client.Users(ctx, "1", Trojan)
 	if err != nil {
 		t.Error(err)
 		return
@@ -115,15 +122,16 @@ func TestSubmitWithAgent(t *testing.T) {
 			Count:    22,
 		}
 	}
-	err = client.SubmitWithAgent("1", Trojan, generalUserTraffic)
+	err = client.SubmitWithAgent(ctx, "1", Trojan, generalUserTraffic)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func TestSubmitStatsWithAgent(t *testing.T) {
+func TestIntegrationSubmitStatsWithAgent(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
+	ctx := context.Background()
 	stats := &TrafficStats{
 		Count:    1,
 		Requests: 1,
@@ -133,25 +141,27 @@ func TestSubmitStatsWithAgent(t *testing.T) {
 		},
 	}
 
-	err := client.SubmitStatsWithAgent("1", Trojan, stats)
+	err := client.SubmitStatsWithAgent(ctx, "1", Trojan, stats)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func TestHeartbeat(t *testing.T) {
+func TestIntegrationHeartbeat(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	err := client.Heartbeat("1", Trojan, "127.0.0.1")
+	ctx := context.Background()
+	err := client.Heartbeat(ctx, "1", Trojan, "127.0.0.1")
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func TestVerify(t *testing.T) {
+func TestIntegrationVerify(t *testing.T) {
 	skipIfNoServer(t)
 	client := CreateClient()
-	valid, err := client.Verify("1", Trojan)
+	ctx := context.Background()
+	valid, err := client.Verify(ctx, "1", Trojan)
 	if err != nil {
 		t.Error(err)
 	}
