@@ -16,7 +16,7 @@ func newTestServer(t *testing.T, statusCode int, body any) *httptest.Server {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(statusCode)
 		if body != nil {
-			json.NewEncoder(w).Encode(body)
+			_ = json.NewEncoder(w).Encode(body)
 		}
 	}))
 	t.Cleanup(server.Close)
@@ -294,7 +294,7 @@ func TestContextCancellation(t *testing.T) {
 			return
 		case <-time.After(5 * time.Second):
 			w.WriteHeader(200)
-			json.NewEncoder(w).Encode(map[string]any{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data":    true,
 				"message": "success",
 			})
